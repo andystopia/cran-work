@@ -1,0 +1,9 @@
+[package]
+name = "mini-r"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chumsky = { version = "=1.0.0-alpha.7", features = ["label"] }
+miette = { version = "7.4.0", features = ["fancy"] }
+thiserror = "2.0.4"

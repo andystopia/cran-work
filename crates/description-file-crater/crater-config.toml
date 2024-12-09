@@ -1,0 +1,15 @@
+[repository]
+archive_url = "cran.r-project.org"
+
+# fetching from the CRAN can be MAD
+# slow, so instead we can fetch 
+# from some substitutor, just to 
+# speed up the process a little
+
+# in my case, the github mirror of the 
+# CRAN is perfectly sufficient.
+[repository.substituter.description_file]
+url = [
+  "https://raw.githubusercontent.com/cran/{package_name}/refs/heads/master/DESCRIPTION",
+  "https://raw.githubusercontent.com/cran/{package_name}/refs/heads/main/DESCRIPTION"
+  ]
