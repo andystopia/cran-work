@@ -1,0 +1,17 @@
+[package]
+name = "description-to-rattler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5.23", features = ["derive"] }
+cran-description-file-parser.workspace = true
+crancherry.workspace = true
+fs-err = "3.0.0"
+indexmap = { version = "2.7.0", features = ["serde"] }
+miette = { version = "7.4.0", features = ["fancy"] }
+rattler_digest = "1.0.3"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_yaml = "0.9.34"
+tar = "0.4.43"
+ureq = "2.12.1"
