@@ -4,3 +4,4 @@ resolver = "2"
 
 [workspace.dependencies]
 cran-description-file-parser = { path = "crates/cran-description-file-parser" }
+crancherry = {path = "crates/crancherry"}
