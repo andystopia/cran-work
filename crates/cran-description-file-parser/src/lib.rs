@@ -1,17 +1,38 @@
 use ariadne::{sources, Color, Label, Report, ReportKind};
 use chumsky::prelude::*;
 use chumsky::Parser;
+use miette::LabeledSpan;
 use text::{inline_whitespace, newline};
 
+/// Strips leading and trailing whitespace from
+/// every line in a block of text. This is useful
+/// because the DESCRIPTION file (Debian Control)
+/// uses indents to declare that the field
+/// is wrapping onto the next line. This function
+/// can be used to strip those indents, and return
+/// the text to it's intended meaning. The reason
+/// this isn't done automatically is because it
+/// requires an allocation for every string, and
+/// the literal contents of the field suffice
+/// for a great many use cases.
+pub fn strip_indents(input: &str) -> String {
+    let mut output_str = String::new();
+    for line in input.lines() {
+        output_str.push_str(line.trim());
+        output_str.push('\n');
+    }
+    output_str
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum VersionSeperator { 
+pub enum VersionSeperator {
     Dot,
-    Dash
+    Dash,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RVersion<'a> {
     pub components: Vec<&'a str>,
-    pub separators: Vec<VersionSeperator>
+    pub separators: Vec<VersionSeperator>,
 }
 
 #[derive(Debug, Clone)]
@@ -88,28 +109,36 @@ pub fn parse_key<'a>(
 
 pub fn parse_version<'a>() -> impl Parser<'a, &'a str, RVersion<'a>, extra::Err<Rich<'a, char>>> {
     let any_version_component = any()
-        .filter(|c: &char| {
-            c.is_alphabetic() || c.is_numeric() || *c == '_' || *c == '+' 
-        })
+        .filter(|c: &char| c.is_alphabetic() || c.is_numeric() || *c == '_' || *c == '+')
         .repeated()
         .at_least(1)
         .to_slice()
         .padded_by(debian_ws());
 
     any_version_component
-        .then(choice((just('.').to(VersionSeperator::Dot), just('-').to(VersionSeperator::Dash))).or_not())
-        .repeated().at_least(1)
+        .then(
+            choice((
+                just('.').to(VersionSeperator::Dot),
+                just('-').to(VersionSeperator::Dash),
+            ))
+            .or_not(),
+        )
+        .repeated()
+        .at_least(1)
         .collect()
         .map(|items: Vec<_>| {
             let mut version_parts = Vec::new();
             let mut separators = Vec::new();
-            for (ver, sep) in items { 
+            for (ver, sep) in items {
                 version_parts.push(ver);
-                if let Some(sep) = sep { 
+                if let Some(sep) = sep {
                     separators.push(sep);
                 }
             }
-            RVersion { components: version_parts, separators }
+            RVersion {
+                components: version_parts,
+                separators,
+            }
         })
 }
 
@@ -120,6 +149,18 @@ pub enum RVersionOrdering {
     GE,
     LT,
     LE,
+}
+
+impl RVersionOrdering {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            RVersionOrdering::EQ => "==",
+            RVersionOrdering::GT => ">",
+            RVersionOrdering::GE => ">=",
+            RVersionOrdering::LT => "<",
+            RVersionOrdering::LE => "<=",
+        }
+    }
 }
 
 pub fn parse_version_ordering<'a>(
@@ -230,7 +271,10 @@ pub fn parse_field<'a>() -> impl Parser<'a, &'a str, Field<'a>, extra::Err<Rich<
                 "Suggests" => Ok(Field::Suggests(vec![])),
                 "LinkingTo" => Ok(Field::LinkingTo(vec![])),
                 "RoxygenNote" => Ok(Field::RoxygenNote(emp)),
-                "Version" => Ok(Field::Version(RVersion { components: vec![], separators: vec![] })),
+                "Version" => Ok(Field::Version(RVersion {
+                    components: vec![],
+                    separators: vec![],
+                })),
                 _ => Ok(Field::Any { key, value: emp }),
             },
         }
@@ -253,7 +297,15 @@ pub fn parse_any_value<'a>() -> impl Parser<'a, &'a str, &'a str, extra::Err<Ric
 pub fn parse_description_file<'a>(
 ) -> impl Parser<'a, &'a str, Vec<Field<'a>>, extra::Err<Rich<'a, char>>> {
     parse_field()
-        .recover_with(via_parser(any().and_is(just('\n').not()).repeated().at_least(1).then(just('\n')).to_slice().map(|res| Field::ErrorLine(res))))
+        .recover_with(via_parser(
+            any()
+                .and_is(just('\n').not())
+                .repeated()
+                .at_least(1)
+                .then(just('\n'))
+                .to_slice()
+                .map(|res| Field::ErrorLine(res)),
+        ))
         .separated_by(text::newline().repeated())
         .collect()
         .then_ignore(newline().or(end()).or_not())
@@ -301,6 +353,44 @@ pub fn from_str(file: &str) -> Result<Vec<Field<'_>>, Vec<Rich<'_, char, SimpleS
     parse_description_file().parse(file).into_result()
 }
 
+pub fn rich_to_miette_inline(source_code: String) -> impl Fn(Vec<Rich<'_, char, SimpleSpan>>) -> Vec<miette::Report> {
+    move |rich_errs: Vec<Rich<'_, char, SimpleSpan>>| {
+        rich_to_miette(rich_errs, source_code.clone())
+    }
+}
+
+pub fn rich_to_miette(rich_errs: Vec<Rich<'_, char, SimpleSpan>>, source_code: String) -> Vec<miette::Report> {
+    rich_errs
+        .into_iter()
+        .map(|e| e.map_token(|c| c.to_string()))
+        .map(|e| {
+            let primary = LabeledSpan::new_primary_with_span(
+                Some(e.to_string()),
+                e.span().start..e.span().end,
+            );
+
+            let contexts = e.contexts().map(|(label, span)| {
+                LabeledSpan::new(Some(label.to_string()), span.start, span.end)
+            });
+
+            let mut combined = Vec::new();
+
+            combined.push(primary);
+            combined.extend(contexts);
+
+            let res = miette::miette!(
+                severity = miette::Severity::Error,
+                labels = combined,
+                "Failed to Parse CRAN PACKAGES File: {}",
+                e.to_string(),
+            )
+            .with_source_code(source_code.clone());
+
+            res
+        })
+        .collect::<Vec<_>>()
+}
+
 pub fn pretty_errors(file: &str, errs: Vec<Rich<'_, char, SimpleSpan>>) {
     let filename = "DESCRIPTION";
 
@@ -331,8 +421,6 @@ pub fn pretty_errors(file: &str, errs: Vec<Rich<'_, char, SimpleSpan>>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-
 
     #[test]
     fn test_version_parse() {
@@ -369,7 +457,7 @@ License: GPL version 2 or later"#;
     }
 
     #[test]
-    pub fn incorrect_line() { 
+    pub fn incorrect_line() {
         // ideally an incorrect line won't fully fail a parse
         let file = r#"Package: hello
 THIS LINE IS WRONG
@@ -380,11 +468,11 @@ Version: 1.0
             Some(vals) => dbg!(vals),
             None => {
                 panic!("partially incorrect file generated no outputs");
-            },
+            }
         };
     }
     #[test]
-    pub fn wrong_indent() { 
+    pub fn wrong_indent() {
         // ideally an incorrect line won't fully fail a parse
         let file = r#"  What: THIS LINE IS WRONG
 Version: 1.0
@@ -394,7 +482,7 @@ Version: 1.0
             Some(vals) => dbg!(vals),
             None => {
                 panic!("partially incorrect file generated no outputs");
-            },
+            }
         };
     }
 
