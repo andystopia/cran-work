@@ -9,6 +9,12 @@ pub struct RVersionEco {
 
 impl PartialOrd for RVersionEco {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for RVersionEco {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         // comparing two (in non-semver) is somewhat, tricky,
         // from the most forwards part of the version to the most
         // backwards, if two components are equal, then we move to the next component,
@@ -25,19 +31,21 @@ impl PartialOrd for RVersionEco {
             let other_comp = other_iter.next();
 
             match (self_comp, other_comp) {
-                (None, None) => return Some(std::cmp::Ordering::Equal),
-                (None, Some(_)) => return Some(std::cmp::Ordering::Less),
-                (Some(_), None) => return Some(std::cmp::Ordering::Greater),
+                (None, None) => return std::cmp::Ordering::Equal,
+                (None, Some(_)) => return std::cmp::Ordering::Less,
+                (Some(_), None) => return std::cmp::Ordering::Greater,
                 (Some(self_comp), Some(other_comp)) => {
+
+                 
                     if self_comp.len() == other_comp.len() {
                         match self_comp.cmp(other_comp) {
                             std::cmp::Ordering::Equal => continue,
-                            x => return Some(x),
+                            x => return x,
                         }
                     } else if self_comp.len() > other_comp.len() {
-                        return Some(std::cmp::Ordering::Greater);
+                        return std::cmp::Ordering::Greater;
                     } else {
-                        return Some(std::cmp::Ordering::Less);
+                        return std::cmp::Ordering::Less;
                     }
                 }
             }
@@ -45,15 +53,9 @@ impl PartialOrd for RVersionEco {
     }
 }
 
-impl Ord for RVersionEco {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap()
-    }
-}
-
 impl RVersionEco {
     pub fn from_str(s: &str) -> Self {
-        let components = s.split(&['.', '-']).map(|s| EcoString::from(s)).collect::<Vec<_>>();
+        let components = s.split(&['.', '-']).map(EcoString::from).collect::<Vec<_>>();
         Self { components, separators: s.chars().filter_map(|c| match c {
             '.' => Some(VersionSeperator::Dot),
             '-' => Some(VersionSeperator::Dash),

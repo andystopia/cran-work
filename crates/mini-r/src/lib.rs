@@ -1,8 +1,9 @@
+#![allow(dead_code)]
 pub mod rfunc_intrinsic;
 
 use chumsky::prelude::*;
 use miette::miette;
-use rfunc_intrinsic::{RFuncSignature, RFunctionDef};
+
 
 use std::{borrow::Cow, collections::HashMap};
 use text::inline_whitespace;
@@ -193,7 +194,7 @@ fn parse_integer<'a>(
         .to_slice()
         .then_ignore(just('L').or_not())
         .map(|v: &str| RAbstractSyntaxTree::Integer {
-            value: i64::from_str_radix(v, 10).unwrap(),
+            value: v.parse::<i64>().unwrap(),
         })
 }
 
@@ -303,6 +304,17 @@ impl<'a> RVecBacking<'a> {
             RVecBacking::RList(i) => i.len(),
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            RVecBacking::RInt(i) => i.is_empty(),
+            RVecBacking::RDouble(i) => i.is_empty(),
+            RVecBacking::RBool(i) => i.is_empty(),
+            RVecBacking::RStr(i) => i.is_empty(),
+            RVecBacking::RList(i) => i.is_empty(),
+        }
+    }
+    
     pub fn promote(self, disc: RVecBackingDisc) -> RVecBacking<'a> {
         // we note that promotion (->) isn't always transitive
         // we do not have: a -> b -> c <==> a -> c because
@@ -1024,11 +1036,11 @@ pub fn interpret_r<'a>(ast: &RAbstractSyntaxTree<'a>) -> miette::Result<RValue<'
                         match arg {
                             FunctionArg::Named { name, value } => {
                                 names.push(Some(name.clone()));
-                                values.push(interpret_r(&value)?)
+                                values.push(interpret_r(value)?)
                             }
                             FunctionArg::Unnamed { value } => {
                                 names.push(None);
-                                values.push(interpret_r(&value)?)
+                                values.push(interpret_r(value)?)
                             }
                         };
                     }
@@ -1148,7 +1160,7 @@ pub fn interpret_r<'a>(ast: &RAbstractSyntaxTree<'a>) -> miette::Result<RValue<'
                                 RValue::Str(RString(s)) => {
                                     res.push_str(&s);
                                     if i != args.len() - 1 {
-                                        res.push_str(" ");
+                                        res.push(' ');
                                     }
                                 }
                                 _ => return Err(miette!("only strings are supported in paste")),
@@ -1239,7 +1251,7 @@ pub fn interpret_r<'a>(ast: &RAbstractSyntaxTree<'a>) -> miette::Result<RValue<'
                 // }
                 "" => match args.as_slice() {
                     [] => Err(miette::miette!("() is not valid value type instance in R")),
-                    [FunctionArg::Unnamed { value }] => interpret_r(&value),
+                    [FunctionArg::Unnamed { value }] => interpret_r(value),
                     // it seems like R treats a set of paranthesis
                     // as implicitly as the `c` function if there is ambiguity
                     args @ [..] => {
@@ -1250,11 +1262,11 @@ pub fn interpret_r<'a>(ast: &RAbstractSyntaxTree<'a>) -> miette::Result<RValue<'
                             match arg {
                                 FunctionArg::Named { name, value } => {
                                     names.push(Some(name.clone()));
-                                    values.push(interpret_r(&value)?)
+                                    values.push(interpret_r(value)?)
                                 }
                                 FunctionArg::Unnamed { value } => {
                                     names.push(None);
-                                    values.push(interpret_r(&value)?)
+                                    values.push(interpret_r(value)?)
                                 }
                             };
                         }

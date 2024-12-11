@@ -169,8 +169,7 @@ pub enum Cli {
     },
 }
 
-
-fn decode_packages_file(bytes: Bytes) -> std::io::Result<String> { 
+fn decode_packages_file(bytes: Bytes) -> std::io::Result<String> {
     let mut gz_decode = GzDecoder::new(BufReader::new(bytes.as_ref()));
     let mut index_buf = String::new();
     gz_decode.read_to_string(&mut index_buf)?;
@@ -183,7 +182,6 @@ fn cran_packages_file_blocking() -> anyhow::Result<String> {
     let index = decode_packages_file(index)?;
     Ok(index)
 }
-
 
 #[derive(Debug)]
 pub struct PackageIndex<'a> {
@@ -227,7 +225,6 @@ impl<'a> PackageIndex<'a> {
 fn pprint_fields(fields: Vec<Field<'_>>) {
     for field in fields {
         match field {
-            
             Field::Package(name) => {
                 println!("Package: {}", name);
             }
@@ -273,7 +270,7 @@ fn pprint_fields(fields: Vec<Field<'_>>) {
             }
             Field::ErrorLine(err_line) => {
                 println!("ERROR @ {}", err_line);
-            },
+            }
         }
     }
 }
@@ -315,8 +312,8 @@ fn parse_cran_desc_file(contents: &str) -> anyhow::Result<Vec<Field<'_>>> {
     }
 }
 
-pub fn cran_dependencies_to_grub_dependencies<'s>(
-    dependencies: Vec<cran_description_file_parser::Dependency<'s>>,
+pub fn cran_dependencies_to_grub_dependencies(
+    dependencies: Vec<cran_description_file_parser::Dependency>,
 ) -> Dependencies<EcoString, RVersionEco> {
     let mut deps = DependencyConstraints::default();
     for dep in dependencies {
@@ -325,14 +322,13 @@ pub fn cran_dependencies_to_grub_dependencies<'s>(
             .constraint
             .map(|c| {
                 let version = RVersionEco::from(c.version);
-                let ordering = match c.ordering {
+                match c.ordering {
                     RVersionOrdering::EQ => Range::exact(version),
                     RVersionOrdering::GT => Range::higher_than(version.bump()),
                     RVersionOrdering::GE => Range::higher_than(version),
                     RVersionOrdering::LT => Range::strictly_lower_than(version),
                     RVersionOrdering::LE => Range::strictly_lower_than(version.bump()),
-                };
-                ordering
+                }
             })
             .unwrap_or(Range::any());
         if let Some(dep) = deps.get_mut(name) {
@@ -553,11 +549,9 @@ impl CRANResolver {
         let mut vc = self.version_cache.borrow_mut();
         let vc_entry = vc
             .entry(EcoString::from(package_name))
-            .or_insert_with(Default::default);
+            .or_default();
 
-        {
-            vc_entry.drain(..)
-        };
+        vc_entry.drain(..);
 
         for version in archives_parsed
             .into_iter()
@@ -644,7 +638,7 @@ fn print_built_dependency_tree(
     Ok(())
 }
 
-fn fetch_recommended_packages(r_version: &str) -> anyhow::Result<Vec<CranPackage>> { 
+fn fetch_recommended_packages(r_version: &str) -> anyhow::Result<Vec<CranPackage>> {
     let url = format!("https://cran.r-project.org/src/contrib/{r_version}/Recommended/");
 
     let res = reqwest::blocking::get(url)?.text()?;
@@ -652,18 +646,15 @@ fn fetch_recommended_packages(r_version: &str) -> anyhow::Result<Vec<CranPackage
     parse_cran_index(&CranIndexPage(res))
 }
 
-
 fn main() -> anyhow::Result<()> {
     // println!("R packages for Version 4.3.2");
-    // for pkg in fetch_recommended_packages("4.3.2")? { 
+    // for pkg in fetch_recommended_packages("4.3.2")? {
     //     println!(" - {} @ {}", pkg.name, pkg.version);
     // }
     resolve_package("tidyverse")?;
-    
+
     Ok(())
 }
-
-
 
 fn resolve_package(pkg: &str) -> Result<(), anyhow::Error> {
     let cran = CRANResolver::new()?;
@@ -684,4 +675,4 @@ fn resolve_package(pkg: &str) -> Result<(), anyhow::Error> {
         Err(err) => panic!("{:?}", err),
     };
     Ok(())
-    }
+}

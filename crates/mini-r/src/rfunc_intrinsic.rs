@@ -157,7 +157,7 @@ pub fn person_def() -> RFunctionDef<'static> {
         },
         def: |rfa| {
             let person = RVec::list(
-                rfa.names.into_iter().map(|i| Some(i)).collect::<Vec<_>>(),
+                rfa.names.into_iter().map(Some).collect::<Vec<_>>(),
                 rfa.func_args,
             )
             .with_class("person");
@@ -179,7 +179,7 @@ pub fn rprint_def() -> RFunctionDef<'static> {
             has_kwargs: false,
         },
         def: |args| {
-            let x = args.func_args.get(0).unwrap();
+            let x = args.func_args.first().unwrap();
             print_r_item("", x);
             Ok(RValue::Null)
         },
@@ -234,7 +234,7 @@ pub fn print_r_item(prefix: &str, item: &RValue) {
         RValue::Double(d) => println!("[1] {}", d),
         RValue::Int(i) => println!("[1] {}", i),
         RValue::Str(str) => println!("[1] \"{}\"", str.0),
-        RValue::RVec(v) => print_r_vec(prefix, &v),
+        RValue::RVec(v) => print_r_vec(prefix, v),
     }
 }
 
@@ -242,7 +242,7 @@ pub fn print_r_vec(prefix: &str, rvec: &RVec) {
     match &rvec.backing {
         RVecBacking::RInt(i) => {
             let res = i
-                .into_iter()
+                .iter()
                 .zip(&rvec.not_available)
                 .map(|(v, na)| if *na { "NA".to_owned() } else { v.to_string() })
                 .collect::<Vec<String>>();
@@ -251,7 +251,7 @@ pub fn print_r_vec(prefix: &str, rvec: &RVec) {
 
         RVecBacking::RDouble(i) => {
             let res = i
-                .into_iter()
+                .iter()
                 .zip(&rvec.not_available)
                 .map(|(v, na)| if *na { "NA".to_owned() } else { v.to_string() })
                 .collect::<Vec<String>>();
@@ -260,7 +260,7 @@ pub fn print_r_vec(prefix: &str, rvec: &RVec) {
         RVecBacking::RBool(_) => todo!(),
         RVecBacking::RStr(v) => {
             let res = v
-                .into_iter()
+                .iter()
                 .zip(&rvec.not_available)
                 .map(|(v, na)| {
                     if *na {
