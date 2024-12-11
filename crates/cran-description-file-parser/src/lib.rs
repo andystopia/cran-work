@@ -16,12 +16,7 @@ use text::{inline_whitespace, newline};
 /// the literal contents of the field suffice
 /// for a great many use cases.
 pub fn strip_indents(input: &str) -> String {
-    let mut output_str = String::new();
-    for line in input.lines() {
-        output_str.push_str(line.trim());
-        output_str.push('\n');
-    }
-    output_str
+    input.lines().map(|line| line.trim()).collect::<Vec<_>>().join("\n")
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
