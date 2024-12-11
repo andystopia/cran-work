@@ -1,20 +1,20 @@
-///! Parses CRAN DESCRIPTION files into Rattler Recipes.
-///! A great deal of this code was already written by the rattler
-///! community over in github.com/prefix-dev/rattler-build, and I've
-///! copied and pasted a great deal of it. However, I'm basically adapting
-///! it to fit my input sources, as it's really handy being able to support
-///! more than the r-universe package set, such as GitHub/Lab/other remotes,
-///! and CRAN packages that haven't made their way into the r universe yet.
-///!
-///! This crate seeks to unify the R building world, and move away from
-///! external dependencies, allowing for a more rust-y and contained build
-///! ecosystem.
+//! Parses CRAN DESCRIPTION files into Rattler Recipes.
+//! A great deal of this code was already written by the rattler
+//! community over in github.com/prefix-dev/rattler-build, and I've
+//! copied and pasted a great deal of it. However, I'm basically adapting
+//! it to fit my input sources, as it's really handy being able to support
+//! more than the r-universe package set, such as GitHub/Lab/other remotes,
+//! and CRAN packages that haven't made their way into the r universe yet.
+//!
+//! This crate seeks to unify the R building world, and move away from
+//! external dependencies, allowing for a more rust-y and contained build
+//! ecosystem.
 use std::collections::{HashMap, HashSet};
 
 use clap::Parser;
 use cran_description_file_parser::{strip_indents, RVersion, VersionConstraint};
-use crancherry::Cran;
-use miette::miette;
+use crancherry::{Cran, CranPackage};
+use miette::{miette, IntoDiagnostic};
 use rattler_digest::{compute_bytes_digest, Sha256};
 use serialize::{ScriptTest, Test};
 
@@ -102,10 +102,10 @@ const R_BUILTINS: &[&str] = &[
 pub struct PackageFields<'a>(Vec<cran_description_file_parser::Field<'a>>);
 
 impl PackageFields<'_> {
-    pub fn get_field(&self, key: &str) -> Option<&cran_description_file_parser::Field> {
-        self.0.iter().find(|f| match f {
-            cran_description_file_parser::Field::Any { key: k, .. } => k == &key,
-            _ => false,
+    pub fn get_field(&self, key: &str) -> Option<&&str> {
+        self.0.iter().find_map(|f| match f {
+            cran_description_file_parser::Field::Any { key: k, value } if k == &key => Some(value),
+            _ => None,
         })
     }
 
@@ -186,13 +186,13 @@ fn make_unique(deps: Vec<String>) -> Vec<String> {
     output_vec
 }
 
-/// Generate rattler-build recipes straight from 
+/// Generate rattler-build recipes straight from
 /// the CRAN, by utilizing the DESCRIPTION file.
 #[derive(Parser, Debug)]
-pub enum Cli { 
-    /// Generate a rattler-build recipe from 
+pub enum Cli {
+    /// Generate a rattler-build recipe from
     /// a CRAN package. Old versions supported too!
-    GenerateCran { 
+    GenerateCran {
         /// name of the package on the CRAN.
         package_name: String,
         /// (OPTIONAL) version of the package
@@ -203,80 +203,178 @@ pub enum Cli {
         #[clap(long)]
         /// write the recipe to disk in the forge format.
         export: bool,
-    }
+    },
+
+    /// print the DESCRIPTION file of a
+    /// package on the CRAN.
+    PrintDescription {
+        package_name: String,
+        package_version: Option<String>,
+        /// (OPTIONAL) URL to the CRAN itself, defaults to r-project.
+        cran_url: Option<String>,
+    },
+}
+
+fn format_r_package(package_name: &str) -> String {
+    format!("r-{}", package_name.to_lowercase())
 }
 
 fn main() -> miette::Result<()> {
     let cli = Cli::parse();
 
-    let target_package = "ggplot2";
-    
-    let cran = Cran::new();
+    match cli {
+        Cli::GenerateCran {
+            package_name,
+            package_version,
+            cran_url,
+            export,
+        } => {
+            let final_recipe = generate_recipe(
+                &package_name,
+                package_version.as_deref(),
+                cran_url.as_deref(),
+            )?;
 
-    // determine exactly what to download off of the CRAN
-    let cran_package = cran.most_recent_version_of(&target_package)?;
+            if export {
+                let package_dir = format!("r-{}", package_name.to_lowercase());
+                fs_err::create_dir(&package_dir).into_diagnostic()?;
+                fs_err::write(format!("{package_dir}/recipe.yaml"), final_recipe)
+                    .into_diagnostic()?;
+            } else {
+                println!();
+                println!("   Rattler Recipe for {}    ", package_name);
+                println!("==================================");
+                println!("{}", final_recipe);
+            }
+        }
+        Cli::PrintDescription {
+            package_name,
+            package_version,
+            cran_url,
+        } => print_description(
+            &package_name,
+            package_version.as_deref(),
+            cran_url.as_deref(),
+        )?,
+    }
+
+    Ok(())
+}
+
+fn print_description(
+    package: &str,
+    version: Option<&str>,
+    cran_url: Option<&str>,
+) -> miette::Result<()> {
+    let cran = match cran_url {
+        Some(url) => Cran::with_url(url.to_owned()),
+        None => Cran::new(),
+    };
+
+    let cran_package = match version {
+        Some(version) => CranPackage {
+            name: package.to_string().into(),
+            version: crancherry::RVersion::from_str(version),
+        },
+        None => {
+            eprintln!("Figuring out most recent version of {}", package);
+            cran.most_recent_version_of(package)?
+        }
+    };
+
+    eprintln!(
+        "Most recent version of {} is {}",
+        package, cran_package.version
+    );
+
+    eprintln!(
+        "Figuring out download url for {}@{}",
+        cran_package.name, cran_package.version
+    );
     let pkg_download = cran.download_url_for(&cran_package.name, &cran_package.version)?;
+    eprintln!("Downloading {}...", package);
+    let description_file = pkg_download.download_decompressed()?.description_file()?;
+    let description_file = description_file.contents();
+    eprintln!("Finished downloading {}...", package);
 
-    // download the package into a byte vector.
-    let downloaded_bytes = pkg_download.download_vec()?;
+    println!();
 
-    // rattler-build is going to want the the hash of the package, so 
-    // compute it from the byte vector, while we can borrow it.
+    println!("   DESCRIPTION file for {}    ", package);
+    println!("==================================");
+    println!("{}", description_file);
+    Ok(())
+}
+
+fn generate_recipe(
+    target_package: &str,
+    version: Option<&str>,
+    cran_url: Option<&str>,
+) -> miette::Result<String> {
+    let cran = match cran_url {
+        Some(url) => Cran::with_url(url.to_owned()),
+        None => Cran::new(),
+    };
+
+    let cran_package = match version {
+        Some(version) => CranPackage {
+            name: target_package.to_string().into(),
+            version: crancherry::RVersion::from_str(version),
+        },
+        None => {
+            eprintln!("Figuring out most recent version of {}", target_package);
+            cran.most_recent_version_of(target_package)?
+        }
+    };
+
+    eprintln!(
+        "Most recent version of {} is {}",
+        target_package, cran_package.version
+    );
+
+    eprintln!(
+        "Figuring out download url for {}@{}",
+        cran_package.name, cran_package.version
+    );
+    let pkg_download = cran.download_url_for(&cran_package.name, &cran_package.version)?;
+    eprintln!("Downloading {}...", target_package);
+    let downloaded_bytes = pkg_download.download_uncompressed_vec()?;
+    eprintln!("Finished downloading {}...", target_package);
     let digest = compute_bytes_digest::<Sha256>(&downloaded_bytes.compressed);
-
-    // now uncompress and untar.
     let mut pkg = downloaded_bytes.into_compressed_package()?;
-    
-    // take the DESCRIPTION file and parse it.
+    eprintln!("Parsing description field {}...", target_package);
     let res = pkg.description_file()?;
     let res = res.parse()?;
-
     let package = PackageFields(res);
-
     let mut recipe = serialize::Recipe::default();
-
-    recipe.package.name = package
-        .name()
-        .ok_or(miette!("No package name found in DESCRIPTION manifest"))?
-        .to_string();
-
-    // CRAN supports dots or dashes in package versions,
-    // however, Conda I don't believe does, so we're simply
-    // going to substitute dashes for dots, because I believe
-    // that they are mostly equivalent as far as version control goes.
+    eprintln!("Generating recipe for {}...", target_package);
+    recipe.package.name = format_r_package(
+        package
+            .name()
+            .ok_or(miette!("No package name found in DESCRIPTION manifest"))?,
+    );
     recipe.package.version = package
         .version()
         .ok_or(miette!("No package version found in DESCRIPTION manifest"))?
         .components
         .join(".");
-
-    
-
     let source = serialize::SourceElement {
         url: pkg_download.url,
         sha256: Some(format!("{:x}", digest)),
         md5: None,
     };
-
     recipe.source.push(source);
-
     recipe.build.script = "R CMD INSTALL --build .".to_owned();
-
     let build_requirements = vec![
         "${{ compiler('c') }}".to_string(),
         "${{ compiler('cxx') }}".to_string(),
         "make".to_string(),
     ];
-
     let needs_compilation = package.needs_compilation().unwrap_or_default();
-
     if needs_compilation {
         recipe.requirements.build.extend(build_requirements.clone());
     }
-
     recipe.requirements.host = vec!["r-base".to_string()];
     recipe.requirements.run = vec!["r-base".to_string()];
-
     let dependencies = package
         .0
         .iter()
@@ -316,7 +414,6 @@ fn main() -> miette::Result<()> {
             _ => None,
         })
         .flatten();
-
     let mut remaining_deps = HashSet::new();
     for Dep { dep, role } in dependencies {
         if R_BUILTINS.contains(&dep.name) {
@@ -326,20 +423,20 @@ fn main() -> miette::Result<()> {
         let dep_spec = match &dep.constraint {
             Some(VersionConstraint { ordering, version }) => {
                 format!(
-                    "r-{} {} {}",
-                    dep.name,
+                    "{} {}{}",
+                    format_r_package(dep.name),
                     ordering.as_str(),
                     version.components.join(".")
                 )
             }
-            None => format!("r-{}", dep.name),
+            None => format_r_package(dep.name),
         };
 
         if dep.name == "R" {
             let dep_spec = match &dep.constraint {
                 Some(VersionConstraint { ordering, version }) => {
                     format!(
-                        "r-base {} {}",
+                        "r-base {}{}",
                         ordering.as_str(),
                         version.components.join(".")
                     )
@@ -369,24 +466,27 @@ fn main() -> miette::Result<()> {
             }
         }
     }
-
     recipe.requirements.host = make_unique(recipe.requirements.host);
     recipe.requirements.build = make_unique(recipe.requirements.build);
     recipe.requirements.run = make_unique(recipe.requirements.run);
 
     recipe.tests.push(Test::Script(ScriptTest {
-        script: vec![format!("Rscript -e 'library(\"{}\")'", recipe.package.name)],
+        script: vec![format!("Rscript -e 'library(\"{}\")'", cran_package.name)],
     }));
-
-    recipe.about.summary = package.title().map(|x| strip_indents(*x));
-    recipe.about.description = package.description().map(|x| strip_indents(*x));
+    recipe.about.summary = package.title().map(|x| strip_indents(x));
+    recipe.about.description = package.description().map(|x| strip_indents(x));
     (recipe.about.license, recipe.about.license_file) = package
         .license()
-        .map(|x| map_license(*x))
+        .map(|x| map_license(x))
         .unwrap_or((None, None));
+    // only take the first URL, as we'll 
+    // assume that that is the homepage
+    recipe.about.homepage = package
+        .get_field("URL")
+        .and_then(|&x| x.split(',').next().map(|x| x.to_string()));
 
+    recipe.about.repository = Some(format!("https://github.com/cran/{}", cran_package.name));
     let recipe_str = format!("{}", recipe);
-
     let mut final_recipe = String::new();
     for line in recipe_str.lines() {
         if line.contains("SUGGEST") {
@@ -398,8 +498,5 @@ fn main() -> miette::Result<()> {
             final_recipe.push_str(&format!("{}\n", line));
         }
     }
-
-    println!("{}", final_recipe);
-
-    Ok(())
+    Ok(final_recipe.trim().to_owned())
 }

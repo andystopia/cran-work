@@ -159,6 +159,7 @@ impl CranPackageDownloadUrl {
             version,
         }
     }
+
     fn from_archive(url: &String, name: String, version: RVersion) -> Self {
         Self {
             url: format!(
@@ -172,7 +173,38 @@ impl CranPackageDownloadUrl {
         }
     }
 
-    pub fn download_vec(&self) -> Result<CranPackageCompressedDownload, CranError> {
+
+    /// downloads and decompresses the package, however, 
+    /// it is still in a tar archive (the structure which 
+    /// represents the package in in the public compressed
+    /// field of the returned struct). The package 
+    /// is wrapped in a convenience struct for better error 
+    /// messages, and more readable access of files.
+    pub fn download_decompressed(&self) -> Result<CompressedRPackage, CranError> {
+        let compressed = ureq::get(&self.url).call()?.into_reader();
+
+        let reader = GzDecoder::new(BufReader::new(compressed));
+
+        Ok(CompressedRPackage {
+            compressed: Archive::new(reader),
+            name: self.name.clone().into(),
+        })
+    }
+
+    /// downloads the archive into a structure
+    /// backed by a Vec<u8>, which is accessible in 
+    /// the compressed field of the returned struct.
+    /// this method is probably less efficient than 
+    /// download_decompressed, yet does less work, and 
+    /// has less features, nevertheless, this is useful
+    /// if you need to compute the hash of the data, and can
+    /// inevitably converted to the `CompressedRPackage` struct
+    /// that the other function returns anyways. It is probably 
+    /// just a bit less simple/efficient. I would recommend
+    /// converting this to a `CompressedRPackage` instead of 
+    /// redownloading the package using `download_decompressed`, by 
+    /// using the `CranPackageCompressedDownload::into_compressed_package` method.
+    pub fn download_uncompressed_vec(&self) -> Result<CranPackageCompressedDownload, CranError> {
         let mut reader = ureq::get(&self.url).call()?.into_reader();
 
         let mut buf = Vec::new();
@@ -309,6 +341,11 @@ impl<'a> From<cran_description_file_parser::RVersion<'a>> for RVersion {
 pub struct DescriptionFile(String);
 
 impl DescriptionFile {
+    
+    pub fn contents(&self) -> &str {
+        &self.0
+    }
+
     pub fn parse(&self) -> Result<Vec<Field>, CranError> {
         cran_description_file_parser::from_str(&self.0)
             .map_err(|err| rich_to_miette(err, self.0.clone()))
@@ -368,10 +405,20 @@ pub struct Cran {
 impl Cran {
     pub fn new() -> Self {
         Self {
+            // hmm, is it fail to link this deeply into the CRAN?
             url: "https://cran.r-project.org/src/contrib".to_string(),
         }
     }
 
+    /// create a new cran client with a given url
+    /// this is optimal if you can pre-choose your 
+    /// cran mirror, instead of depending on r-project.org,
+    /// for speed or if you have an alternative mirrror.
+    /// 
+    /// I'm not sure how cran-compliant most mirrors are, 
+    /// so the default link points into the src/contrib directory, 
+    /// but this naturally excludes things like binary substitution, 
+    /// so we might have to generalize this a little bit.
     pub fn with_url(url: String) -> Self {
         Self { url }
     }

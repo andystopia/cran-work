@@ -1,5 +1,5 @@
 // copied from https://raw.githubusercontent.com/prefix-dev/rattler-build/89dbf6891fa583e3a208f4269b7732e5768e58a5/src/recipe_generator/serialize.rs
-use std::{fmt, path::PathBuf};
+use std::fmt;
 
 use indexmap::IndexMap;
 use serde::Serialize;
@@ -105,18 +105,3 @@ impl fmt::Display for Recipe {
     }
 }
 
-/// Write a recipe to "{package_name}/recipe.yaml"
-pub fn write_recipe(package_name: &str, recipe: &str) -> std::io::Result<()> {
-    let path = PathBuf::from(&format!("{}/recipe.yaml", &package_name));
-    fs_err::create_dir_all(path.parent().unwrap())?;
-
-    if path.exists() {
-        // move to backup
-        let backup_path = path.with_extension("yaml.bak");
-        fs_err::rename(&path, backup_path)?;
-    }
-
-    println!("Writing recipe to {}", path.display());
-
-    fs_err::write(path, recipe)
-}
