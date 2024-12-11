@@ -405,7 +405,7 @@ impl<'a> RVec<'a> {
                     f(RValue::Str(i.clone()))
                 }
             }
-            RVecBacking::RList(rl) => todo!(),
+            RVecBacking::RList(_rl) => todo!(),
         }
     }
     pub fn lift_str(value: RString<'a>) -> RVec<'a> {
@@ -1309,7 +1309,7 @@ mod test {
     #[error("R error!")]
     struct RError {}
     pub fn pretty_errors<'a>(
-        filename: String,
+        _filename: String,
         file: &'a str,
         errs: Vec<Rich<'a, char, SimpleSpan>>,
     ) {
