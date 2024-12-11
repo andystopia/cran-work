@@ -32,10 +32,9 @@ should generate an r-matrix directory in the current folder which contains the r
 - `crates/mini-r`: a miniature R language which hopefully will someday be
   good enough to create a sandboxed execution environment to execute
   the R code present in DESCRIPTION files.
-- `crates/description-file-crater`: *was* a way to download all the description
-  files of the most recent packages on the CRAN, but first trying to grab
-  them from the https://github.com/cran mirror, in order to integration test the 
-  DESCRIPTION file parser, but an editor I was using deleted the main.rs file.
+- `crates/description-file-crater`: attempts to parse every DESCRIPTION file of the 
+  most recent version of every package on the CRAN. Caches downloads and uses github
+  when available to diminish load on the CRAN server.
 
 
 # Problems to Solve.
