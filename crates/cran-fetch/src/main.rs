@@ -638,13 +638,6 @@ fn print_built_dependency_tree(
     Ok(())
 }
 
-fn fetch_recommended_packages(r_version: &str) -> anyhow::Result<Vec<CranPackage>> {
-    let url = format!("https://cran.r-project.org/src/contrib/{r_version}/Recommended/");
-
-    let res = reqwest::blocking::get(url)?.text()?;
-
-    parse_cran_index(&CranIndexPage(res))
-}
 
 fn main() -> anyhow::Result<()> {
     // println!("R packages for Version 4.3.2");
