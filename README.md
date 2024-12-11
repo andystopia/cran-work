@@ -15,7 +15,7 @@ This project can generate rattler-build recipe manifests from source.
 After cloning this repo, the command:
 
 ```sh
-cargo run --release -p description-to-rattler generate-cran Matrix
+cargo run --release -p description-to-rattler generate-cran Matrix --export
 ```
 
 should generate an r-matrix directory in the current folder which contains the rattler-build yaml file. See https://github.com/wolfv/r-forge for examples for how to compile these R files. Output is designed to match those files as much as possible, and indeed, a great deal of the code that generates the YAMLs comes directly from the `rattler-build` crate.
