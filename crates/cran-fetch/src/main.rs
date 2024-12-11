@@ -623,7 +623,7 @@ fn print_built_dependency_tree(
         match res {
             Dependencies::Unknown => bail!("{rname} has unknown dependencies"),
             Dependencies::Known(known) => {
-                let mut res = known.into_iter().map(|(a, _)| a).collect::<Vec<_>>();
+                let mut res = known.into_keys().collect::<Vec<_>>();
 
                 res.sort_unstable();
 
@@ -654,11 +654,11 @@ fn fetch_recommended_packages(r_version: &str) -> anyhow::Result<Vec<CranPackage
 
 
 fn main() -> anyhow::Result<()> {
-    println!("R packages for Version 4.3.2");
-    for pkg in fetch_recommended_packages("4.3.2")? { 
-        println!(" - {} @ {}", pkg.name, pkg.version);
-    }
-    // resolve_package("tidyverse")?;
+    // println!("R packages for Version 4.3.2");
+    // for pkg in fetch_recommended_packages("4.3.2")? { 
+    //     println!(" - {} @ {}", pkg.name, pkg.version);
+    // }
+    resolve_package("tidyverse")?;
     
     Ok(())
 }
