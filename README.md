@@ -5,6 +5,39 @@ I'm doing a little experimentation into the R ecosystem, looking to build
 a system for R package management that is more robust and cost effective than 
 what currently exists. 
 
+
+# Features
+
+## Generating A Rattler-Build Recipe From DESCRIPTION.
+
+This project can generate rattler-build recipe manifests from source.
+
+After cloning this repo, the command:
+
+```sh
+cargo run --release -p description-to-rattler generate-cran Matrix
+```
+
+should generate an r-matrix directory in the current folder which contains the rattler-build yaml file. See https://github.com/wolfv/r-forge for examples for how to compile these R files. Output is designed to match those files as much as possible, and indeed, a great deal of the code that generates the YAMLs comes directly from the `rattler-build` crate.
+
+
+# Project Layout
+
+- `crates/description-to-rattler`: convert DESCRIPTION files off of the CRAN into
+  rattler-build yamls. Supports alternative CRAN's to r-project.org, and can print `DESCRIPTION` files. Can also output yaml files for historical versions of packages.
+- `crates/cran-description-file-parser`: a (mostly) zero-copy, chumsky-based parser for R DESCRIPTION files. Supports `miette` and `ariadne` error messages, comments in file, strongly typed parsing of dependencies, and error recovery on failed field parses.
+- `crates/cran-fetch`: currently a rudimentary R package version solver.
+- `crates/crancherry`: an abstraction over the CRAN which abstracts
+  having to traverse the directories yourself, and simplifies interfacing with it.
+- `crates/mini-r`: a miniature R language which hopefully will someday be
+  good enough to create a sandboxed execution environment to execute
+  the R code present in DESCRIPTION files.
+- `crates/description-file-crater`: *was* a way to download all the description
+  files of the most recent packages on the CRAN, but first trying to grab
+  them from the https://github.com/cran mirror, in order to integration test the 
+  DESCRIPTION file parser, but an editor I was using deleted the main.rs file.
+
+
 # Problems to Solve.
 
 ## The CRAN has a reproducibility issue.
