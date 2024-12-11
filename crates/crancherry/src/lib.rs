@@ -410,6 +410,15 @@ impl Cran {
         }
     }
 
+
+    /// assumes structure of active CRAN, but allows
+    /// just changing out the host for a different mirror.
+    pub fn with_host(host: String) -> Self {
+        Self {
+            url: format!("https://{}/src/contrib", host),
+        }
+    }
+
     /// create a new cran client with a given url
     /// this is optimal if you can pre-choose your 
     /// cran mirror, instead of depending on r-project.org,
