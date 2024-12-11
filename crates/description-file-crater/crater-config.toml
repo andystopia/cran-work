@@ -1,5 +1,8 @@
-[repository]
-archive_url = "cran.r-project.org"
+[crater]
+host = "cran.r-project.org"
+
+description_file_dir = "./description_files"
+
 
 # fetching from the CRAN can be MAD
 # slow, so instead we can fetch 
@@ -7,9 +10,13 @@ archive_url = "cran.r-project.org"
 # speed up the process a little
 
 # in my case, the github mirror of the 
-# CRAN is perfectly sufficient.
-[repository.substituter.description_file]
-url = [
+# CRAN is perfectly sufficient; it is possible
+# the CRAN is ahead of the GitHub mirror, which 
+# definitely happens, but for the sake of 
+# just testing a ton of description files against
+# the parser, then this is fine.
+[crater.substituter.description_file]
+urls = [
   "https://raw.githubusercontent.com/cran/{package_name}/refs/heads/master/DESCRIPTION",
-  "https://raw.githubusercontent.com/cran/{package_name}/refs/heads/main/DESCRIPTION"
+  "https://raw.githubusercontent.com/cran/{package_name}/refs/heads/main/DESCRIPTION",
   ]
