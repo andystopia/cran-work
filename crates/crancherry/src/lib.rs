@@ -145,9 +145,9 @@ impl CranPackageCompressedDownload {
 }
 
 pub struct CranPackageDownloadUrl {
-    pub url: String,
     pub name: String,
     pub version: RVersion,
+    pub url: String,
 }
 
 impl CranPackageDownloadUrl {
@@ -475,6 +475,21 @@ impl Cran {
         }
 
         Ok(all_pkgs)
+    }
+
+    /// get all the current packages as a vector
+    /// of packages with their corresponding download urls
+    pub fn available_with_url(&self) -> Result<Vec<CranPackageDownloadUrl>, CranError> { 
+        self.available()?
+            .into_iter()
+            .map(|pkg| {
+                Ok(CranPackageDownloadUrl::from_main(
+                    &self.url,
+                    pkg.name.into(),
+                    pkg.version,
+                ))
+            })
+            .collect()
     }
 
     /// returns the historical versions of every package, does NOT
