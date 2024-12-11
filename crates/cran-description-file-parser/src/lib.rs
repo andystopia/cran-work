@@ -564,10 +564,4 @@ This: here.
             }
         };
     }
-
-    #[test]
-    pub fn test_recovery() {
-        let content = r#"
-            "#;
-    }
 }
