@@ -11,9 +11,9 @@
 //! ecosystem.
 use std::collections::{HashMap, HashSet};
 
-use clap::Parser;
-use cran_description_file_parser::{strip_indents, RVersion, VersionConstraint};
-use crancherry::{Cran, CranPackage};
+use clap::{Parser, Subcommand};
+use cran_description_file_parser::{strip_indents, Field, RVersion, VersionConstraint};
+use crancherry::{BioConductor, Cran, CranPackage};
 use miette::{miette, IntoDiagnostic};
 use rattler_digest::{compute_bytes_digest, Sha256};
 use serialize::{ScriptTest, Test};
@@ -99,58 +99,58 @@ const R_BUILTINS: &[&str] = &[
     "utils",
 ];
 
-pub struct PackageFields<'a>(Vec<cran_description_file_parser::Field<'a>>);
+pub struct PackageFields<'a>(Vec<Field<'a>>);
 
 impl PackageFields<'_> {
     pub fn get_field(&self, key: &str) -> Option<&&str> {
         self.0.iter().find_map(|f| match f {
-            cran_description_file_parser::Field::Any { key: k, value } if k == &key => Some(value),
+            Field::Any { key: k, value } if k == &key => Some(value),
             _ => None,
         })
     }
 
     pub fn name(&self) -> Option<&&str> {
         self.0.iter().find_map(|el| match el {
-            cran_description_file_parser::Field::Package(d) => Some(d),
+            Field::Package(d) => Some(d),
             _ => None,
         })
     }
 
     pub fn description(&self) -> Option<&&str> {
         self.0.iter().find_map(|el| match el {
-            cran_description_file_parser::Field::Description(d) => Some(d),
+            Field::Description(d) => Some(d),
             _ => None,
         })
     }
 
     pub fn title(&self) -> Option<&&str> {
         self.0.iter().find_map(|el| match el {
-            cran_description_file_parser::Field::Title(d) => Some(d),
+            Field::Title(d) => Some(d),
             _ => None,
         })
     }
 
     pub fn version(&self) -> Option<&RVersion> {
         self.0.iter().find_map(|el| match el {
-            cran_description_file_parser::Field::Version(d) => Some(d),
+            Field::Version(d) => Some(d),
             _ => None,
         })
     }
 
     pub fn license(&self) -> Option<&&str> {
         self.0.iter().find_map(|el| match el {
-            cran_description_file_parser::Field::License(d) => Some(d),
+            Field::License(d) => Some(d),
             _ => None,
         })
     }
 
     pub fn needs_compilation(&self) -> Option<bool> {
         self.0.iter().find_map(|el| match el {
-            cran_description_file_parser::Field::Any {
+            Field::Any {
                 key: "NeedsCompilation",
                 value: "yes",
             } => Some(true),
-            cran_description_file_parser::Field::Any {
+            Field::Any {
                 key: "NeedsCompilation",
                 value: "no",
             } => Some(false),
@@ -186,32 +186,49 @@ fn make_unique(deps: Vec<String>) -> Vec<String> {
     output_vec
 }
 
+#[derive(Subcommand, Debug)]
+pub enum RepoCommand {
+    Recipe {
+        package_name: String,
+        package_version: Option<String>,
+        #[clap(long)]
+        export: bool,
+    },
+    PrintDescription {
+        package: String,
+        #[clap(long)]
+        version: Option<String>,
+    },
+}
 /// Generate rattler-build recipes straight from
 /// the CRAN, by utilizing the DESCRIPTION file.
 #[derive(Parser, Debug)]
 pub enum Cli {
-    /// Generate a rattler-build recipe from
+    /// Generate a rattler-build recipe for
     /// a CRAN package. Old versions supported too!
-    GenerateCran {
-        /// name of the package on the CRAN.
-        package_name: String,
-        /// (OPTIONAL) version of the package
-        package_version: Option<String>,
-
-        /// (OPTIONAL) URL to the CRAN itself, defaults to r-project.
-        cran_url: Option<String>,
-        #[clap(long)]
-        /// write the recipe to disk in the forge format.
-        export: bool,
+    Cran {
+        #[command(subcommand)]
+        command: RepoCommand,
     },
 
-    /// print the DESCRIPTION file of a
-    /// package on the CRAN.
-    PrintDescription {
-        package_name: String,
-        package_version: Option<String>,
-        /// (OPTIONAL) URL to the CRAN itself, defaults to r-project.
-        cran_url: Option<String>,
+    /// Generate a rattler-build recipe for
+    /// a Bioconductor package.
+    Bioc {
+        #[command(subcommand)]
+        command: RepoCommand,
+    },
+
+    /// Generate a rattler-build recipe for
+    /// a BioconductorAnnotation package.
+    BiocAnnotation {
+        #[command(subcommand)]
+        command: RepoCommand,
+    },
+    /// Generate a rattler-build recipe for
+    /// a BioconductorExperiment package.
+    BiocExperiment {
+        #[command(subcommand)]
+        command: RepoCommand,
     },
 }
 
@@ -222,18 +239,20 @@ fn format_r_package(package_name: &str) -> String {
 fn main() -> miette::Result<()> {
     let cli = Cli::parse();
 
-    match cli {
-        Cli::GenerateCran {
+    let (cran, subcommand) = match cli {
+        Cli::Cran { command } => (Cran::new(), command),
+        Cli::Bioc { command } => (BioConductor::new()?.into_bioc_repo(), command),
+        Cli::BiocAnnotation { command } => (BioConductor::new()?.into_annotation_repo(), command),
+        Cli::BiocExperiment { command } => (BioConductor::new()?.into_experiment_repo(), command),
+    };
+
+    match subcommand {
+        RepoCommand::Recipe {
             package_name,
             package_version,
-            cran_url,
             export,
         } => {
-            let final_recipe = generate_recipe(
-                &package_name,
-                package_version.as_deref(),
-                cran_url.as_deref(),
-            )?;
+            let final_recipe = generate_recipe(&package_name, package_version.as_deref(), &cran)?;
 
             if export {
                 let package_dir = format!("r-{}", package_name.to_lowercase());
@@ -247,51 +266,32 @@ fn main() -> miette::Result<()> {
                 println!("{}", final_recipe);
             }
         }
-        Cli::PrintDescription {
-            package_name,
-            package_version,
-            cran_url,
-        } => print_description(
-            &package_name,
-            package_version.as_deref(),
-            cran_url.as_deref(),
-        )?,
+        RepoCommand::PrintDescription { package, version } => {
+            print_description(&package, version.as_deref(), &cran)?;
+        }
     }
-
     Ok(())
 }
 
-fn print_description(
-    package: &str,
-    version: Option<&str>,
-    cran_url: Option<&str>,
-) -> miette::Result<()> {
-    let cran = match cran_url {
-        Some(url) => Cran::with_url(url.to_owned()),
-        None => Cran::new(),
-    };
-
-    let cran_package = match version {
-        Some(version) => CranPackage {
-            name: package.to_string().into(),
-            version: crancherry::RVersion::from_str(version),
-        },
+fn print_description(package: &str, version: Option<&str>, cran: &Cran) -> miette::Result<()> {
+    let pkg_download = match version {
+        Some(version) => {
+            let cran_package = CranPackage {
+                name: package.to_string().into(),
+                version: crancherry::RVersion::from_str(version),
+            };
+            eprintln!(
+                "Figuring out download url for {}@{}",
+                cran_package.name, cran_package.version
+            );
+            cran.download_url_for(&cran_package.name, &cran_package.version)?
+        }
         None => {
             eprintln!("Figuring out most recent version of {}", package);
-            cran.most_recent_version_of(package)?
+            cran.most_recent_version_of_url(package)?
         }
     };
 
-    eprintln!(
-        "Most recent version of {} is {}",
-        package, cran_package.version
-    );
-
-    eprintln!(
-        "Figuring out download url for {}@{}",
-        cran_package.name, cran_package.version
-    );
-    let pkg_download = cran.download_url_for(&cran_package.name, &cran_package.version)?;
     eprintln!("Downloading {}...", package);
     let description_file = pkg_download.download_decompressed()?.description_file()?;
     let description_file = description_file.contents();
@@ -308,35 +308,29 @@ fn print_description(
 fn generate_recipe(
     target_package: &str,
     version: Option<&str>,
-    cran_url: Option<&str>,
+    cran: &Cran,
 ) -> miette::Result<String> {
-    let cran = match cran_url {
-        Some(url) => Cran::with_url(url.to_owned()),
-        None => Cran::new(),
-    };
-
-    let cran_package = match version {
-        Some(version) => CranPackage {
-            name: target_package.to_string().into(),
-            version: crancherry::RVersion::from_str(version),
-        },
+    let pkg_download = match version {
+        Some(version) => {
+            let cran_package = CranPackage {
+                name: target_package.to_string().into(),
+                version: crancherry::RVersion::from_str(version),
+            };
+            eprintln!(
+                "Figuring out download url for {}@{}",
+                cran_package.name, cran_package.version
+            );
+            cran.download_url_for(&cran_package.name, &cran_package.version)?
+        }
         None => {
             eprintln!("Figuring out most recent version of {}", target_package);
-            cran.most_recent_version_of(target_package)?
+            let pkg = cran.most_recent_version_of_url(target_package)?;
+            eprintln!("Most recent version of {} is {}", pkg.name, pkg.version);
+            pkg
         }
     };
 
-    eprintln!(
-        "Most recent version of {} is {}",
-        target_package, cran_package.version
-    );
-
-    eprintln!(
-        "Figuring out download url for {}@{}",
-        cran_package.name, cran_package.version
-    );
-    let pkg_download = cran.download_url_for(&cran_package.name, &cran_package.version)?;
-    eprintln!("Downloading {}...", target_package);
+    println!("Downloading {}...", target_package);
     let downloaded_bytes = pkg_download.download_uncompressed_vec()?;
     eprintln!("Finished downloading {}...", target_package);
     let digest = compute_bytes_digest::<Sha256>(&downloaded_bytes.compressed);
@@ -379,7 +373,7 @@ fn generate_recipe(
         .0
         .iter()
         .filter_map(|el| match el {
-            cran_description_file_parser::Field::Depends(d) => Some(
+            Field::Depends(d) => Some(
                 d.iter()
                     .map(|dep| Dep {
                         dep: dep.to_owned(),
@@ -387,7 +381,7 @@ fn generate_recipe(
                     })
                     .collect::<Vec<_>>(),
             ),
-            cran_description_file_parser::Field::Imports(d) => Some(
+            Field::Imports(d) => Some(
                 d.iter()
                     .map(|dep| Dep {
                         dep: dep.to_owned(),
@@ -395,7 +389,7 @@ fn generate_recipe(
                     })
                     .collect::<Vec<_>>(),
             ),
-            cran_description_file_parser::Field::Suggests(d) => Some(
+            Field::Suggests(d) => Some(
                 d.iter()
                     .map(|dep| Dep {
                         dep: dep.to_owned(),
@@ -403,7 +397,7 @@ fn generate_recipe(
                     })
                     .collect::<Vec<_>>(),
             ),
-            cran_description_file_parser::Field::LinkingTo(d) => Some(
+            Field::LinkingTo(d) => Some(
                 d.iter()
                     .map(|dep| Dep {
                         dep: dep.to_owned(),
@@ -471,7 +465,7 @@ fn generate_recipe(
     recipe.requirements.run = make_unique(recipe.requirements.run);
 
     recipe.tests.push(Test::Script(ScriptTest {
-        script: vec![format!("Rscript -e 'library(\"{}\")'", cran_package.name)],
+        script: vec![format!("Rscript -e 'library(\"{}\")'", pkg_download.name)],
     }));
     recipe.about.summary = package.title().map(|x| strip_indents(x));
     recipe.about.description = package.description().map(|x| strip_indents(x));
@@ -479,13 +473,13 @@ fn generate_recipe(
         .license()
         .map(|x| map_license(x))
         .unwrap_or((None, None));
-    // only take the first URL, as we'll 
+    // only take the first URL, as we'll
     // assume that that is the homepage
     recipe.about.homepage = package
         .get_field("URL")
         .and_then(|&x| x.split(',').next().map(|x| x.to_string()));
 
-    recipe.about.repository = Some(format!("https://github.com/cran/{}", cran_package.name));
+    recipe.about.repository = Some(format!("https://github.com/cran/{}", pkg_download.name));
     let recipe_str = format!("{}", recipe);
     let mut final_recipe = String::new();
     for line in recipe_str.lines() {
