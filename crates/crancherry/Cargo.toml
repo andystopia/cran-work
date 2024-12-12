@@ -12,3 +12,5 @@ ecow = "0.2.3"
 ureq = "2.12.1"
 scraper = "0.22.0"
 tar = "0.4.43"
+serde = { version = "1.0.216", features = ["derive"] }
+serde_yaml = "0.9.34"

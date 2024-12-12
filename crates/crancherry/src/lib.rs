@@ -16,13 +16,17 @@
 //!    on the cran in the same way that a human
 //!    would be able to peruse the index themselves.
 
-use std::io::{BufReader, Read};
+use std::{
+    collections::HashMap,
+    io::{BufReader, Read},
+};
 
 use cran_description_file_parser::{rich_to_miette, Field};
 use ecow::EcoString;
 use flate2::bufread::GzDecoder;
 use miette::Diagnostic;
 use scraper::Selector;
+use serde::Deserialize;
 use tar::Archive;
 use thiserror::Error;
 
@@ -54,6 +58,11 @@ pub enum CranError {
 
     #[error("CRAN: {name} does not have version {version} available.")]
     PackageFoundVersionNotFound { name: String, version: String },
+    #[error("Failed to parse a yaml which {purpose}: {error}")]
+    YamlDeserialize {
+        error: serde_yaml::Error,
+        purpose: String,
+    },
 }
 
 #[derive(Debug)]
@@ -62,13 +71,24 @@ pub struct CranPackage {
     pub version: RVersion,
 }
 
-fn cran_package_archive_index_blocking(url: &str, package: &str) -> Result<String, CranError> {
-    // url: https://cran.r-project.org/src/contrib/Archive
+fn archived_versions(url: &str, package: &str) -> Result<Vec<CranPackage>, CranError> {
     let cran_archive_index = format!("{url}/Archive/{package}/");
-    ureq::get(&cran_archive_index)
-        .call()?
-        .into_string()
-        .map_err(|err| CranError::Io { error: err })
+    let res = ureq::get(&cran_archive_index).call();
+
+    match res {
+        Ok(res) => parse_cran_index(
+            res.into_string()
+                .map_err(|err| CranError::Io { error: err })?,
+        ),
+        Err(ureq::Error::Status(404, _)) => {
+            // it's okay if we don't have any archived
+            // versions.  have seen this happen,
+            // and it absolutely should not be a point
+            // of failure for a version solving software.
+            Ok(vec![])
+        }
+        Err(err) => Err(CranError::RequestError { error: err }),
+    }
 }
 
 fn parse_cran_index(index: String) -> Result<Vec<CranPackage>, CranError> {
@@ -173,12 +193,11 @@ impl CranPackageDownloadUrl {
         }
     }
 
-
-    /// downloads and decompresses the package, however, 
-    /// it is still in a tar archive (the structure which 
+    /// downloads and decompresses the package, however,
+    /// it is still in a tar archive (the structure which
     /// represents the package in in the public compressed
-    /// field of the returned struct). The package 
-    /// is wrapped in a convenience struct for better error 
+    /// field of the returned struct). The package
+    /// is wrapped in a convenience struct for better error
     /// messages, and more readable access of files.
     pub fn download_decompressed(&self) -> Result<CompressedRPackage, CranError> {
         let compressed = ureq::get(&self.url).call()?.into_reader();
@@ -192,17 +211,17 @@ impl CranPackageDownloadUrl {
     }
 
     /// downloads the archive into a structure
-    /// backed by a Vec<u8>, which is accessible in 
+    /// backed by a Vec<u8>, which is accessible in
     /// the compressed field of the returned struct.
-    /// this method is probably less efficient than 
-    /// download_decompressed, yet does less work, and 
+    /// this method is probably less efficient than
+    /// download_decompressed, yet does less work, and
     /// has less features, nevertheless, this is useful
     /// if you need to compute the hash of the data, and can
     /// inevitably converted to the `CompressedRPackage` struct
-    /// that the other function returns anyways. It is probably 
+    /// that the other function returns anyways. It is probably
     /// just a bit less simple/efficient. I would recommend
-    /// converting this to a `CompressedRPackage` instead of 
-    /// redownloading the package using `download_decompressed`, by 
+    /// converting this to a `CompressedRPackage` instead of
+    /// redownloading the package using `download_decompressed`, by
     /// using the `CranPackageCompressedDownload::into_compressed_package` method.
     pub fn download_uncompressed_vec(&self) -> Result<CranPackageCompressedDownload, CranError> {
         let mut reader = ureq::get(&self.url).call()?.into_reader();
@@ -341,7 +360,6 @@ impl<'a> From<cran_description_file_parser::RVersion<'a>> for RVersion {
 pub struct DescriptionFile(String);
 
 impl DescriptionFile {
-    
     pub fn contents(&self) -> &str {
         &self.0
     }
@@ -398,6 +416,53 @@ impl CompressedRPackage {
             .map(DescriptionFile)
     }
 }
+
+#[derive(Deserialize, Debug)]
+pub struct BioConductor {
+    r_ver_for_bioc_ver: HashMap<String, String>,
+    release_dates: HashMap<String, String>,
+    release_version: String,
+    r_version_associated_with_release: String,
+}
+
+impl BioConductor {
+    pub fn new() -> Result<Self, CranError> {
+        let req = ureq::get("https://bioconductor.org/config.yaml")
+            .call()
+            .map_err(|err| CranError::RequestError { error: err })?;
+
+        serde_yaml::from_reader(req.into_reader()).map_err(|err| CranError::YamlDeserialize {
+            error: err,
+            purpose: "enumerates details about the BioConductor".to_owned(),
+        })
+    }
+
+    pub fn releases(&self) -> Vec<String> {
+        self.release_dates.keys().cloned().collect()
+    }
+
+    pub fn r_version_for_bioc_version(&self, bioc_version: &str) -> Option<&str> {
+        self.r_ver_for_bioc_ver
+            .get(bioc_version)
+            .map(|x| x.as_str())
+    }
+
+    pub fn current_release(&self) -> &str {
+        &self.release_version
+    }
+
+    pub fn current_r_version(&self) -> &str {
+        &self.r_version_associated_with_release
+    }
+
+    pub fn into_package_repository(&self) -> Cran {
+        Cran::with_url(format!(
+            "https://bioconductor.org/packages/{}/bioc/src/contrib",
+            self.current_release()
+        ))
+    }
+}
+
 pub struct Cran {
     url: String,
 }
@@ -410,7 +475,6 @@ impl Cran {
         }
     }
 
-
     /// assumes structure of active CRAN, but allows
     /// just changing out the host for a different mirror.
     pub fn with_host(host: String) -> Self {
@@ -420,13 +484,13 @@ impl Cran {
     }
 
     /// create a new cran client with a given url
-    /// this is optimal if you can pre-choose your 
+    /// this is optimal if you can pre-choose your
     /// cran mirror, instead of depending on r-project.org,
     /// for speed or if you have an alternative mirrror.
-    /// 
-    /// I'm not sure how cran-compliant most mirrors are, 
-    /// so the default link points into the src/contrib directory, 
-    /// but this naturally excludes things like binary substitution, 
+    ///
+    /// I'm not sure how cran-compliant most mirrors are,
+    /// so the default link points into the src/contrib directory,
+    /// but this naturally excludes things like binary substitution,
     /// so we might have to generalize this a little bit.
     pub fn with_url(url: String) -> Self {
         Self { url }
@@ -479,7 +543,7 @@ impl Cran {
 
     /// get all the current packages as a vector
     /// of packages with their corresponding download urls
-    pub fn available_with_url(&self) -> Result<Vec<CranPackageDownloadUrl>, CranError> { 
+    pub fn available_with_url(&self) -> Result<Vec<CranPackageDownloadUrl>, CranError> {
         self.available()?
             .into_iter()
             .map(|pkg| {
@@ -499,15 +563,12 @@ impl Cran {
     /// the rest are not, we shouldn't need to fetch the current version
     /// again in order to get the history.
     pub fn package_history(&self, package_name: &str) -> Result<Vec<CranPackage>, CranError> {
-        let index = cran_package_archive_index_blocking(&self.url, package_name)?;
-        let parsed = parse_cran_index(index)?;
-        Ok(parsed)
+        archived_versions(&self.url, package_name)
     }
 
     /// returns the all versions of a package, past and present
     pub fn package_versions(&self, package_name: &str) -> Result<Vec<CranPackage>, CranError> {
-        let index = cran_package_archive_index_blocking(&self.url, package_name)?;
-        let mut parsed = parse_cran_index(index)?;
+        let mut parsed = self.package_history(package_name)?;
 
         let current_package_version = self.most_recent_version_of(package_name)?;
         parsed.push(current_package_version);
@@ -522,49 +583,6 @@ impl Cran {
                 package_name: package_name.to_string(),
             })?;
         Ok(current_package_version)
-    }
-
-    pub fn download_package_gz_from_url_raw<'a>(
-        download_path: &'a str,
-    ) -> Result<Vec<u8>, CranError> {
-        let mut reader = ureq::get(download_path).call()?.into_reader();
-
-        let mut buf = Vec::new();
-        std::io::copy(&mut reader, &mut buf).map_err(|err| CranError::Io { error: err })?;
-        Ok(buf)
-    }
-
-    pub fn download_package_gz_from_url<'a>(
-        download_path: &'a str,
-    ) -> Result<Archive<GzDecoder<BufReader<Box<dyn Read + Send + Sync + 'static>>>>, CranError>
-    {
-        let gz_reader = ureq::get(download_path).call()?.into_reader();
-
-        let tar = GzDecoder::new(BufReader::new(gz_reader));
-
-        Ok(tar::Archive::new(tar))
-    }
-
-    pub fn download_most_recent_version_of(
-        &self,
-        name: &str,
-    ) -> Result<CompressedRPackage, CranError> {
-        let most_recent_version = self.most_recent_version_of(name)?;
-        self.download_package_from_main(&most_recent_version.name, &most_recent_version.version)
-    }
-
-    pub fn download_package(
-        &self,
-        name: &str,
-        version: &RVersion,
-    ) -> Result<CompressedRPackage, CranError> {
-        let most_recent_version = self.most_recent_version_of(name)?;
-
-        if &most_recent_version.version != version {
-            self.download_package_from_archive(name, version)
-        } else {
-            self.download_package_from_main(name, version)
-        }
     }
 
     pub fn download_url_for_most_recent(&self, name: &str) -> Result<String, CranError> {
@@ -615,39 +633,6 @@ impl Cran {
         ))
     }
 
-    pub fn download_package_from_archive(
-        &self,
-        name: &str,
-        version: &RVersion,
-    ) -> Result<CompressedRPackage, CranError> {
-        Self::download_package_gz_from_url(&format!(
-            "{}/Archive/{name}/{name}_{}.tar.gz",
-            self.url,
-            version.to_string()
-        ))
-        .map(|x| CompressedRPackage {
-            compressed: x,
-            name: name.into(),
-        })
-    }
-
-    pub fn download_package_from_main(
-        &self,
-        name: &str,
-        version: &RVersion,
-    ) -> Result<CompressedRPackage, CranError> {
-        Self::download_package_gz_from_url(&format!(
-            "{}/{}_{}.tar.gz",
-            self.url,
-            name,
-            version.to_string()
-        ))
-        .map(|x| CompressedRPackage {
-            compressed: x,
-            name: name.into(),
-        })
-    }
-
     pub fn packages_file(&self) -> Result<String, CranError> {
         let contents = ureq::get(&format!("{}/PACKAGES.gz", self.url))
             .call()?
@@ -691,15 +676,27 @@ mod test {
         Ok(())
     }
 
+
     #[test]
-    pub fn package_description_file() -> miette::Result<()> {
-        let cran = super::Cran::new();
+    pub fn test_bioc() -> miette::Result<()> {
+        let bioc = super::BioConductor::new()?;
 
-        let desc_file = cran
-            .download_package("ggplot2", &cran.package_versions("ggplot2")?[3].version)?
-            .description_file()?;
+        let repo = bioc.into_package_repository();
 
-        println!("{}", desc_file.0);
+        // check to ensure that the available packages
+        // does not through an exception.
+        let available = repo.available()?;
+
+        // we absolutely should see some packages
+        // in the repository
+        for package in available.iter() {
+            println!("{}@{}", package.name, package.version);
+        }
+
+        // let's make sure that we don't choke on versions
+        // of packages, which do not exist in the archive.
+        dbg!(repo.package_versions(&available.iter().next().unwrap().name)?);
+
         Ok(())
     }
 }
