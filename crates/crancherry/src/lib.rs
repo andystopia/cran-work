@@ -455,9 +455,21 @@ impl BioConductor {
         &self.r_version_associated_with_release
     }
 
-    pub fn into_package_repository(&self) -> Cran {
+    pub fn into_bioc_repo(&self) -> Cran {
         Cran::with_url(format!(
             "https://bioconductor.org/packages/{}/bioc/src/contrib",
+            self.current_release()
+        ))
+    }
+    pub fn into_annotation_repo(&self) -> Cran {
+        Cran::with_url(format!(
+            "https://bioconductor.org/packages/{}/data/annotation/src/contrib",
+            self.current_release()
+        ))
+    }
+    pub fn into_experiment_repo(&self) -> Cran {
+        Cran::with_url(format!(
+            "https://bioconductor.org/packages/{}/data/experiment/src/contrib",
             self.current_release()
         ))
     }
@@ -585,6 +597,25 @@ impl Cran {
         Ok(current_package_version)
     }
 
+    pub fn most_recent_version_of_url(
+        &self,
+        package_name: &str,
+    ) -> Result<CranPackageDownloadUrl, CranError> {
+        let available = self.available()?;
+        let referenced_package = available.into_iter().find(|pkg| pkg.name == package_name);
+        let current_package_version =
+            referenced_package.ok_or_else(|| CranError::NoCurrentVersionFoundForPackage {
+                package_name: package_name.to_string(),
+            })?;
+        
+        let pkg = current_package_version;
+        Ok(CranPackageDownloadUrl::from_main(
+            &self.url,
+            pkg.name.into(),
+            pkg.version,
+        ))
+    }
+
     pub fn download_url_for_most_recent(&self, name: &str) -> Result<String, CranError> {
         let first_version = self.most_recent_version_of(name)?;
 
@@ -676,12 +707,11 @@ mod test {
         Ok(())
     }
 
-
     #[test]
     pub fn test_bioc() -> miette::Result<()> {
         let bioc = super::BioConductor::new()?;
 
-        let repo = bioc.into_package_repository();
+        let repo = bioc.into_bioc_repo();
 
         // check to ensure that the available packages
         // does not through an exception.
