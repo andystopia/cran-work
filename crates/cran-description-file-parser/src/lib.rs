@@ -30,6 +30,26 @@ pub struct RVersion<'a> {
     pub separators: Vec<VersionSeperator>,
 }
 
+impl<'a> std::fmt::Display for RVersion<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (component, sep) in self.components.iter().zip(
+            self.separators
+                .iter()
+                .map(Some)
+                .chain(std::iter::once(None)),
+        ) {
+            f.write_str(component)?;
+            if let Some(sep) = sep {
+                match sep {
+                    VersionSeperator::Dot => f.write_str(".")?,
+                    VersionSeperator::Dash => f.write_str("-")?,
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Field<'a> {
     Package(&'a str),
@@ -137,7 +157,7 @@ pub fn parse_version<'a>() -> impl Parser<'a, &'a str, RVersion<'a>, extra::Err<
         })
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RVersionOrdering {
     EQ,
     GT,
@@ -306,7 +326,7 @@ pub fn parse_description_file<'a>(
         .then_ignore(newline().or(end()).or_not())
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct VersionConstraint<'a> {
     pub ordering: RVersionOrdering,
     pub version: RVersion<'a>,
