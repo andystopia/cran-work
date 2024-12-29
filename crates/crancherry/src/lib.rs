@@ -16,6 +16,8 @@
 //!    on the cran in the same way that a human
 //!    would be able to peruse the index themselves.
 
+pub mod cherry;
+
 use std::{
     collections::HashMap,
     io::{BufReader, Read},
@@ -32,6 +34,11 @@ use thiserror::Error;
 
 #[derive(Debug, Error, Diagnostic)]
 pub enum CranError {
+    #[error("failed to parse url {url}: {error}")]
+    UrlError { 
+        url: String,
+        error: url::ParseError
+    },
     #[error("failed to get web resource: {error}")]
     RequestError {
         #[from]
