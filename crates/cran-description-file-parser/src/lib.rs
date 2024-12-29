@@ -16,7 +16,11 @@ use text::{inline_whitespace, newline};
 /// the literal contents of the field suffice
 /// for a great many use cases.
 pub fn strip_indents(input: &str) -> String {
-    input.lines().map(|line| line.trim()).collect::<Vec<_>>().join("\n")
+    input
+        .lines()
+        .map(|line| line.trim())
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -49,6 +53,42 @@ impl<'a> std::fmt::Display for RVersion<'a> {
         Ok(())
     }
 }
+
+/// The ord implementation is based on the R
+/// utils::compareVersions from R, and should
+/// have the exact same characteristics. Any deviation
+/// is considered a bug
+impl<'a> PartialOrd for RVersion<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        let self_iter = self.components.iter().map(|c| c.parse::<i64>().ok());
+        let mut other_iter = other.components.iter().map(|c| c.parse::<i64>().ok());
+
+        for a_k in self_iter {
+            if let Some(b_k) = other_iter.next() {
+                // in R, if a component is not a number, 
+                // then the items are not comparable.
+                let Some((a_k, b_k)) = a_k.zip(b_k) else {
+                    return None;
+                };
+
+                if a_k > b_k {
+                    return Some(std::cmp::Ordering::Greater);
+                } else if a_k < b_k {
+                    return Some(std::cmp::Ordering::Less);
+                }
+            } else {
+                return Some(std::cmp::Ordering::Greater);
+            }
+        }
+
+        if other.components.len() > self.components.len() {
+            return Some(std::cmp::Ordering::Less);
+        } else {
+            return Some(std::cmp::Ordering::Equal);
+        }
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub enum Field<'a> {
@@ -368,13 +408,16 @@ pub fn from_str(file: &str) -> Result<Vec<Field<'_>>, Vec<Rich<'_, char, SimpleS
     parse_description_file().parse(file).into_result()
 }
 
-pub fn rich_to_miette_inline(source_code: String) -> impl Fn(Vec<Rich<'_, char, SimpleSpan>>) -> Vec<miette::Report> {
-    move |rich_errs: Vec<Rich<'_, char, SimpleSpan>>| {
-        rich_to_miette(rich_errs, source_code.clone())
-    }
+pub fn rich_to_miette_inline(
+    source_code: String,
+) -> impl Fn(Vec<Rich<'_, char, SimpleSpan>>) -> Vec<miette::Report> {
+    move |rich_errs: Vec<Rich<'_, char, SimpleSpan>>| rich_to_miette(rich_errs, source_code.clone())
 }
 
-pub fn rich_to_miette(rich_errs: Vec<Rich<'_, char, SimpleSpan>>, source_code: String) -> Vec<miette::Report> {
+pub fn rich_to_miette(
+    rich_errs: Vec<Rich<'_, char, SimpleSpan>>,
+    source_code: String,
+) -> Vec<miette::Report> {
     rich_errs
         .into_iter()
         .map(|e| e.map_token(|c| c.to_string()))
