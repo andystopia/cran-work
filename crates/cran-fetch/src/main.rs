@@ -272,6 +272,7 @@ fn pprint_fields(fields: Vec<Field<'_>>) {
             Field::ErrorLine(err_line) => {
                 println!("ERROR @ {}", err_line);
             }
+            Field::NeedsCompilation(item) => print!("NeedsCompilation: {}", item),
         }
     }
 }
