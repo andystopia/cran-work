@@ -1,4 +1,5 @@
 mod cran;
+mod tree;
 
 use std::{
     cell::RefCell,
@@ -547,9 +548,7 @@ impl CRANResolver {
         // a package that the archives have, but eh, whatevs.
 
         let mut vc = self.version_cache.borrow_mut();
-        let vc_entry = vc
-            .entry(EcoString::from(package_name))
-            .or_default();
+        let vc_entry = vc.entry(EcoString::from(package_name)).or_default();
 
         vc_entry.drain(..);
 
@@ -597,6 +596,41 @@ impl DependencyProvider<EcoString, RVersionEco> for CRANResolver {
     }
 }
 
+fn build_tree(
+    root_packages: Vec<RPkgDisplay>,
+    sol: &HashMap<EcoString, RVersionEco>,
+    resolve: &CRANResolver,
+    tree: &mut tree::Tree<RPkgDisplay>,
+) {
+    for RPkgDisplay {
+        name: rname,
+        version: rver,
+    } in root_packages
+    {
+        let res = resolve.get_dependencies(&rname, &rver).unwrap();
+        match res {
+            Dependencies::Unknown => panic!("{rname} has unknown dependencies"),
+            Dependencies::Known(known) => {
+                let mut res = known.into_keys().collect::<Vec<_>>();
+                res.sort_unstable();
+                let mut children = tree::Tree::new(RPkgDisplay::new(rname.clone(), rver.clone()));
+                build_tree(
+                    res.into_iter()
+                        .map(|res| {
+                            let version = sol.get(&res).unwrap();
+                            RPkgDisplay::new(res, version.clone())
+                        })
+                        .collect(),
+                    sol,
+                    resolve,
+                    &mut children,
+                );
+                tree.push_tree(children);
+            }
+        }
+    }
+}
+
 fn print_built_dependency_tree(
     root_packages: Vec<(EcoString, RVersionEco)>,
     sol: &HashMap<EcoString, RVersionEco>,
@@ -638,15 +672,38 @@ fn print_built_dependency_tree(
     Ok(())
 }
 
-
 fn main() -> anyhow::Result<()> {
     // println!("R packages for Version 4.3.2");
     // for pkg in fetch_recommended_packages("4.3.2")? {
     //     println!(" - {} @ {}", pkg.name, pkg.version);
     // }
-    resolve_package("tidyverse")?;
+    resolve_package("ggplot2")?;
 
     Ok(())
+}
+
+#[derive(Clone, Eq, Hash, PartialEq)]
+pub struct RPkgDisplay {
+    name: EcoString,
+    version: RVersionEco,
+}
+
+impl RPkgDisplay {
+    pub fn new(name: EcoString, version: RVersionEco) -> Self {
+        Self { name, version }
+    }
+}
+
+impl std::fmt::Debug for RPkgDisplay {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} @ {}", self.name, self.version)
+    }
+}
+
+impl std::fmt::Display for RPkgDisplay {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} @ {}", self.name, self.version)
+    }
 }
 
 fn resolve_package(pkg: &str) -> Result<(), anyhow::Error> {
@@ -654,12 +711,27 @@ fn resolve_package(pkg: &str) -> Result<(), anyhow::Error> {
     let resolution = resolve(&cran, pkg.into(), cran.most_recent_version_of(pkg));
     match resolution {
         Ok(sol) => {
-            print_built_dependency_tree(
-                vec![(EcoString::from(pkg), cran.most_recent_version_of(pkg))],
+            let mut tree = tree::Tree::new(RPkgDisplay::new(
+                EcoString::from(pkg),
+                cran.most_recent_version_of(pkg),
+            ));
+            build_tree(
+                vec![RPkgDisplay::new(
+                    EcoString::from(pkg),
+                    cran.most_recent_version_of(pkg),
+                )],
                 &sol.into_iter().collect(),
                 &cran,
-                "",
-            )?;
+                &mut tree,
+            );
+
+            dbg!(tree.create_leveled());
+            // print_built_dependency_tree(
+            //     vec![(EcoString::from(pkg), cran.most_recent_version_of(pkg))],
+            //     &sol.into_iter().collect(),
+            //     &cran,
+            //     "",
+            // )?;
         }
         Err(PubGrubError::NoSolution(mut derivation_tree)) => {
             derivation_tree.collapse_no_versions();
