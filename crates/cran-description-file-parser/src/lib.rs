@@ -65,7 +65,7 @@ impl<'a> PartialOrd for RVersion<'a> {
 
         for a_k in self_iter {
             if let Some(b_k) = other_iter.next() {
-                // in R, if a component is not a number, 
+                // in R, if a component is not a number,
                 // then the items are not comparable.
                 let Some((a_k, b_k)) = a_k.zip(b_k) else {
                     return None;
@@ -89,7 +89,6 @@ impl<'a> PartialOrd for RVersion<'a> {
     }
 }
 
-
 #[derive(Debug, Clone)]
 pub enum Field<'a> {
     Package(&'a str),
@@ -101,6 +100,7 @@ pub enum Field<'a> {
     RoxygenNote(&'a str),
     Depends(Vec<Dependency<'a>>),
     Imports(Vec<Dependency<'a>>),
+    NeedsCompilation(bool),
     LinkingTo(Vec<Dependency<'a>>),
     Suggests(Vec<Dependency<'a>>),
     ErrorLine(&'a str),
@@ -308,6 +308,15 @@ pub fn parse_field<'a>() -> impl Parser<'a, &'a str, Field<'a>, extra::Err<Rich<
                 "RoxygenNote" => {
                     let value = inp.parse(parse_any_value())?;
                     Ok(Field::RoxygenNote(value))
+                }
+                "NeedsCompilation" => {
+                    let value = inp.parse(
+                        just("yes")
+                            .map(|_| true)
+                            .or(just("no").map(|_| false))
+                            .padded_by(debian_ws()),
+                    )?;
+                    Ok(Field::NeedsCompilation(value))
                 }
                 "Version" => inp.parse(parse_version().map(|version| Field::Version(version))),
                 _ => {
