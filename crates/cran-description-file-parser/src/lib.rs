@@ -34,6 +34,24 @@ pub struct RVersion<'a> {
     pub separators: Vec<VersionSeperator>,
 }
 
+impl<'a> RVersion<'a> {
+    pub fn from_string(str: &str) -> RVersion {
+        let components = str.split(&['.', '-']).collect::<Vec<_>>();
+        let separators = str
+            .chars()
+            .filter_map(|c| match c {
+                '.' => Some(VersionSeperator::Dot),
+                '-' => Some(VersionSeperator::Dash),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        RVersion {
+            components,
+            separators,
+        }
+    }
+}
+
 impl<'a> std::fmt::Display for RVersion<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (component, sep) in self.components.iter().zip(
