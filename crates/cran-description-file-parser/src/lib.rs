@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use ariadne::{sources, Color, Label, Report, ReportKind};
 use chumsky::prelude::*;
 use chumsky::Parser;
@@ -30,13 +32,16 @@ pub enum VersionSeperator {
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RVersion<'a> {
-    pub components: Vec<&'a str>,
+    pub components: Vec<Cow<'a, str>>,
     pub separators: Vec<VersionSeperator>,
 }
 
 impl<'a> RVersion<'a> {
     pub fn from_string(str: &str) -> RVersion {
-        let components = str.split(&['.', '-']).collect::<Vec<_>>();
+        let components = str
+            .split(&['.', '-'])
+            .map(Cow::Borrowed)
+            .collect::<Vec<_>>();
         let separators = str
             .chars()
             .filter_map(|c| match c {
@@ -203,7 +208,7 @@ pub fn parse_version<'a>() -> impl Parser<'a, &'a str, RVersion<'a>, extra::Err<
             let mut version_parts = Vec::new();
             let mut separators = Vec::new();
             for (ver, sep) in items {
-                version_parts.push(ver);
+                version_parts.push(Cow::Borrowed(ver));
                 if let Some(sep) = sep {
                     separators.push(sep);
                 }

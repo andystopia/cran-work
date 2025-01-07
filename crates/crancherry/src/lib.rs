@@ -352,7 +352,7 @@ impl<'a> From<cran_description_file_parser::RVersion<'a>> for RVersion {
         }: cran_description_file_parser::RVersion,
     ) -> Self {
         Self {
-            components: components.iter().map(|s| EcoString::from(*s)).collect(),
+            components: components.iter().map(|s| EcoString::from(s.as_ref())).collect(),
             separators: separators
                 .iter()
                 .map(|s| match s {

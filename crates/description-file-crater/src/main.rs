@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use cran_description_file_parser::{rich_to_miette, Field};
+use cran_description_file_parser::{rich_to_miette, strip_indents, Field};
 use crancherry::Cran;
 use fs_err::PathExt;
 use miette::{ensure, IntoDiagnostic};
@@ -80,15 +80,16 @@ pub fn main() -> miette::Result<()> {
     ensure!(
         std::path::Path::new(&config.crater.description_file_dir)
             .fs_err_try_exists()
-            .into_diagnostic()? == true,
-        "Output DESCRIPTION file directory (`{}`) does not exist.", &config.crater.description_file_dir
+            .into_diagnostic()?
+            == true,
+        "Output DESCRIPTION file directory (`{}`) does not exist.",
+        &config.crater.description_file_dir
     );
 
     let cran = Cran::with_host(config.crater.host.clone());
 
     let available = cran.available_with_url()?;
 
-    
     for (i, package) in available.iter().enumerate() {
         let output_path = format!("{}/{}", config.crater.description_file_dir, package.name);
         if std::path::Path::new(&output_path)
@@ -98,7 +99,7 @@ pub fn main() -> miette::Result<()> {
             continue;
         }
 
-        println!(
+        eprintln!(
             "[{}/{}] Downloading {}, because it's not in the cache.",
             i + 1,
             available.len(),
@@ -110,8 +111,7 @@ pub fn main() -> miette::Result<()> {
         fs_err::write(&output_path, description_file).into_diagnostic()?;
     }
 
-
-    println!("Let's start testing each file!");
+    eprintln!("Let's start testing each file!");
 
     let mut errors = HashMap::new();
     let mut successes = 0;
@@ -124,21 +124,49 @@ pub fn main() -> miette::Result<()> {
 
         match cran_description_file_parser::from_str(&description_file) {
             Ok(ok) => {
-                for field in ok { 
-                    if let Field::ErrorLine(err) = field { 
-                        eprintln!("Error in {}: failed to parse line: {}", package.name, err);
-                        minor_failures += 1;
+                let mut pkg_name = None;
+                for field in ok {
+                    match field {
+                        Field::Package(name) => pkg_name = Some(name),
+                        Field::Any {
+                            key: "SystemRequirements",
+                            value,
+                        } => {
+                            let pkg_name = pkg_name
+                                .expect("Package name should always before system requirements");
+
+                            println!(
+                                "{pkg_name}: {}",
+                                strip_indents(value)
+                                    .replace('\n', " ")
+                                    .replace('\r', "")
+                                    .replace("  ", "")
+                            );
+                        }
+                        Field::ErrorLine(err) => {
+                            eprintln!("Error in {}: failed to parse line: {}", package.name, err);
+                            minor_failures += 1;
+                        }
+                        _ => {}
                     }
                 }
                 successes += 1;
-            },
+            }
             Err(errs) => {
                 failures += 1;
-                errors.insert(package.name.clone(), rich_to_miette(errs, description_file.clone()));
-            },
+                errors.insert(
+                    package.name.clone(),
+                    rich_to_miette(errs, description_file.clone()),
+                );
+            }
         }
     }
 
-    println!("[{}/{}] packages parsed successfully (w/ {} minor failures)", successes, failures + successes, minor_failures);
+    eprintln!(
+        "[{}/{}] packages parsed successfully (w/ {} minor failures)",
+        successes,
+        failures + successes,
+        minor_failures
+    );
     Ok(())
 }
