@@ -55,6 +55,18 @@ impl<'a> RVersion<'a> {
             separators,
         }
     }
+
+    pub fn to_owned(&self) -> RVersion<'static> {
+        let components = self
+            .components
+            .iter()
+            .map(|c| Cow::Owned(c.to_string()))
+            .collect();
+        RVersion {
+            components,
+            separators: self.separators.clone(),
+        }
+    }
 }
 
 impl<'a> std::fmt::Display for RVersion<'a> {
