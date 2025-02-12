@@ -106,8 +106,6 @@ pub struct ParsedManifestRepo<'m, 'r> {
     parsed_contents: Vec<Field<'m>>,
 }
 
-
-
 pub struct PackageName<'s> {
     name: Cow<'s, str>,
 }

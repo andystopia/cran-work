@@ -35,10 +35,7 @@ use thiserror::Error;
 #[derive(Debug, Error, Diagnostic)]
 pub enum CranError {
     #[error("failed to parse url {url}: {error}")]
-    UrlError { 
-        url: String,
-        error: url::ParseError
-    },
+    UrlError { url: String, error: url::ParseError },
     #[error("failed to get web resource: {error}")]
     RequestError {
         #[from]
@@ -352,7 +349,10 @@ impl<'a> From<cran_description_file_parser::RVersion<'a>> for RVersion {
         }: cran_description_file_parser::RVersion,
     ) -> Self {
         Self {
-            components: components.iter().map(|s| EcoString::from(s.as_ref())).collect(),
+            components: components
+                .iter()
+                .map(|s| EcoString::from(s.as_ref()))
+                .collect(),
             separators: separators
                 .iter()
                 .map(|s| match s {
@@ -614,7 +614,7 @@ impl Cran {
             referenced_package.ok_or_else(|| CranError::NoCurrentVersionFoundForPackage {
                 package_name: package_name.to_string(),
             })?;
-        
+
         let pkg = current_package_version;
         Ok(CranPackageDownloadUrl::from_main(
             &self.url,
