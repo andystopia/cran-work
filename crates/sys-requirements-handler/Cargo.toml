@@ -1,0 +1,10 @@
+[package]
+name = "sys-requirements-handler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cran-description-file-parser.workspace = true
+fs-err = "3.1.0"
+miette = { version = "7.4.0", features = ["fancy"] }
+toml_edit = "0.22.22"

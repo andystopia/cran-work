@@ -104,4 +104,3 @@ impl fmt::Display for Recipe {
         Ok(())
     }
 }
-

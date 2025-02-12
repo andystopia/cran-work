@@ -4,7 +4,6 @@ pub mod rfunc_intrinsic;
 use chumsky::prelude::*;
 use miette::miette;
 
-
 use std::{borrow::Cow, collections::HashMap};
 use text::inline_whitespace;
 
@@ -314,7 +313,7 @@ impl<'a> RVecBacking<'a> {
             RVecBacking::RList(i) => i.is_empty(),
         }
     }
-    
+
     pub fn promote(self, disc: RVecBackingDisc) -> RVecBacking<'a> {
         // we note that promotion (->) isn't always transitive
         // we do not have: a -> b -> c <==> a -> c because
