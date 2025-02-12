@@ -1,0 +1,1108 @@
+RVersion = "4.3.2"
+version = 1
+
+[package-repositories]
+cran = "https://cran.r-project.org/"
+
+[[packages]]
+name = "askpass"
+version = "1.2.1"
+dependencies = ["sys"]
+needs-compilation = true
+md5-hash = "fc2c6a61b6a354707586b01950366f37"
+repository = "cran"
+
+[[packages]]
+name = "backports"
+version = "1.5.0"
+dependencies = []
+needs-compilation = true
+md5-hash = "f8b5a18e90e7baa72ae9824238245777"
+repository = "cran"
+
+[[packages]]
+name = "base64enc"
+version = "0.1-3"
+dependencies = []
+needs-compilation = true
+md5-hash = "0f476dacdd11a3e0ad56d13f5bc2f190"
+repository = "cran"
+
+[[packages]]
+name = "bit"
+version = "4.5.0.1"
+dependencies = []
+needs-compilation = true
+md5-hash = "36794143b3cfc96be9829b5fe95a0d74"
+repository = "cran"
+
+[[packages]]
+name = "bit64"
+version = "4.6.0-1"
+dependencies = ["bit", "graphics", "methods", "stats", "utils"]
+needs-compilation = true
+md5-hash = "38f3c84f193c30336db1578291f24100"
+repository = "cran"
+
+[[packages]]
+name = "blob"
+version = "1.2.4"
+dependencies = ["methods", "rlang", "vctrs"]
+needs-compilation = false
+md5-hash = "3133f827ee7c1e4ca99c16659984627e"
+repository = "cran"
+
+[[packages]]
+name = "boot"
+version = "1.3-28.1"
+dependencies = ["graphics", "stats"]
+needs-compilation = false
+recommended-for = "4.3.2"
+md5-hash = "9e1c42204f278de069d4bf795fbf725b"
+repository = "cran"
+
+[[packages]]
+name = "broom"
+version = "1.0.7"
+dependencies = ["backports", "dplyr", "generics", "glue", "lifecycle", "purrr", "rlang", "stringr", "tibble", "tidyr"]
+needs-compilation = false
+md5-hash = "0e04807a66a2cff6c42374fd45484695"
+repository = "cran"
+
+[[packages]]
+name = "bslib"
+version = "0.9.0"
+dependencies = ["base64enc", "cachem", "fastmap", "grDevices", "htmltools", "jquerylib", "jsonlite", "lifecycle", "memoise", "mime", "rlang", "sass"]
+needs-compilation = false
+md5-hash = "b36702a77f5e310bd44f36d6604ed2c5"
+repository = "cran"
+
+[[packages]]
+name = "cachem"
+version = "1.1.0"
+dependencies = ["fastmap", "rlang"]
+needs-compilation = true
+md5-hash = "53980eb40dd09b0cd44673d3a6fabe36"
+repository = "cran"
+
+[[packages]]
+name = "callr"
+version = "3.7.6"
+dependencies = ["R6", "processx", "utils"]
+needs-compilation = false
+md5-hash = "9bd3ca85c73b182bce6367962ce8e59a"
+repository = "cran"
+
+[[packages]]
+name = "cellranger"
+version = "1.1.0"
+dependencies = ["rematch", "tibble"]
+needs-compilation = false
+md5-hash = "1abcfea6af5ab2e277cb99e86880456f"
+repository = "cran"
+
+[[packages]]
+name = "class"
+version = "7.3-22"
+dependencies = ["MASS", "stats", "utils"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "8b205d2ef6196c1c637b9d62ee026551"
+repository = "cran"
+
+[[packages]]
+name = "classInt"
+version = "0.4-11"
+dependencies = ["KernSmooth", "class", "e1071", "grDevices", "graphics", "stats"]
+needs-compilation = true
+md5-hash = "ef2a4750f70e32d9d8838a00f144df2e"
+repository = "cran"
+
+[[packages]]
+name = "cli"
+version = "3.6.3"
+dependencies = ["utils"]
+needs-compilation = true
+md5-hash = "4691dd066c26e428327eb40e46a4e8c2"
+repository = "cran"
+
+[[packages]]
+name = "clipr"
+version = "0.8.0"
+dependencies = ["utils"]
+needs-compilation = false
+md5-hash = "558ddf145114bbc0272e6aed05b8e5fe"
+repository = "cran"
+
+[[packages]]
+name = "cluster"
+version = "2.1.4"
+dependencies = ["grDevices", "graphics", "stats", "utils"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "c931e26b94475ff8c6ead1b9c4a3d628"
+repository = "cran"
+
+[[packages]]
+name = "codetools"
+version = "0.2-19"
+dependencies = []
+needs-compilation = false
+recommended-for = "4.3.2"
+md5-hash = "16c3cf3d257b9aaa706f4467ec64c864"
+repository = "cran"
+
+[[packages]]
+name = "colorspace"
+version = "2.1-1"
+dependencies = ["grDevices", "graphics", "methods", "stats"]
+needs-compilation = true
+md5-hash = "194f0bd09b21f970127ff43f3582c638"
+repository = "cran"
+
+[[packages]]
+name = "commonmark"
+version = "1.9.2"
+dependencies = []
+needs-compilation = true
+md5-hash = "02c2b4ba170610b672092708a39fa479"
+repository = "cran"
+
+[[packages]]
+name = "conflicted"
+version = "1.2.0"
+dependencies = ["cli", "memoise", "rlang"]
+needs-compilation = false
+md5-hash = "22c2c1253ab5868c846cb19a481cc2e9"
+repository = "cran"
+
+[[packages]]
+name = "cpp11"
+version = "0.5.1"
+dependencies = []
+needs-compilation = false
+md5-hash = "a18e930a9f2c4d2d933d46d433fa8903"
+repository = "cran"
+
+[[packages]]
+name = "crayon"
+version = "1.5.3"
+dependencies = ["grDevices", "methods", "utils"]
+needs-compilation = false
+md5-hash = "bb290c70d23b2200006187ac7839116f"
+repository = "cran"
+
+[[packages]]
+name = "curl"
+version = "6.2.0"
+dependencies = []
+needs-compilation = true
+md5-hash = "76eddd6c818c6751668b686d64f04153"
+repository = "cran"
+
+[[packages]]
+name = "data.table"
+version = "1.16.4"
+dependencies = ["methods"]
+needs-compilation = true
+md5-hash = "92f79a78f404fc50b945cafcc6fca46f"
+repository = "cran"
+
+[[packages]]
+name = "DBI"
+version = "1.2.3"
+dependencies = ["methods"]
+needs-compilation = false
+md5-hash = "062e1bf5ed04772ecb1623c076c2128c"
+repository = "cran"
+
+[[packages]]
+name = "dbplyr"
+version = "2.5.0"
+dependencies = ["DBI", "R6", "blob", "cli", "dplyr", "glue", "lifecycle", "magrittr", "methods", "pillar", "purrr", "rlang", "tibble", "tidyr", "tidyselect", "utils", "vctrs", "withr"]
+needs-compilation = false
+md5-hash = "e72abd281aaaeeabe1a88e9c1877c0fe"
+repository = "cran"
+
+[[packages]]
+name = "digest"
+version = "0.6.37"
+dependencies = ["utils"]
+needs-compilation = true
+md5-hash = "f1772a9a1587e99f25f6d640b1a9e1fd"
+repository = "cran"
+
+[[packages]]
+name = "dplyr"
+version = "1.1.4"
+dependencies = ["R6", "cli", "generics", "glue", "lifecycle", "magrittr", "methods", "pillar", "rlang", "tibble", "tidyselect", "utils", "vctrs"]
+needs-compilation = true
+md5-hash = "29bdf98592722336f0d07484baf2a959"
+repository = "cran"
+
+[[packages]]
+name = "dtplyr"
+version = "1.3.1"
+dependencies = ["cli", "data.table", "dplyr", "glue", "lifecycle", "rlang", "tibble", "tidyselect", "vctrs"]
+needs-compilation = false
+md5-hash = "d1cc10d74af58ac44a99392237aca50e"
+repository = "cran"
+
+[[packages]]
+name = "e1071"
+version = "1.7-16"
+dependencies = ["class", "grDevices", "graphics", "methods", "proxy", "stats", "utils"]
+needs-compilation = true
+md5-hash = "c7bbeba044310808a8aaceddf3080742"
+repository = "cran"
+
+[[packages]]
+name = "evaluate"
+version = "1.0.3"
+dependencies = []
+needs-compilation = false
+md5-hash = "bb6f78106640f1e1b35010385524ed21"
+repository = "cran"
+
+[[packages]]
+name = "fansi"
+version = "1.0.6"
+dependencies = ["grDevices", "utils"]
+needs-compilation = true
+md5-hash = "27eb3b066918811ce7080f45b18eda04"
+repository = "cran"
+
+[[packages]]
+name = "farver"
+version = "2.1.2"
+dependencies = []
+needs-compilation = true
+md5-hash = "1fa98878bb985e28d968630c7e7597b6"
+repository = "cran"
+
+[[packages]]
+name = "fastmap"
+version = "1.2.0"
+dependencies = []
+needs-compilation = true
+md5-hash = "f53773acd6ba9a86413e8c2dc6441544"
+repository = "cran"
+
+[[packages]]
+name = "fontawesome"
+version = "0.5.3"
+dependencies = ["htmltools", "rlang"]
+needs-compilation = false
+md5-hash = "95b072a27418b962792410dfb21c3d2b"
+repository = "cran"
+
+[[packages]]
+name = "forcats"
+version = "1.0.0"
+dependencies = ["cli", "glue", "lifecycle", "magrittr", "rlang", "tibble"]
+needs-compilation = false
+md5-hash = "5ccbd57663812028250e25cf7c43c2bc"
+repository = "cran"
+
+[[packages]]
+name = "foreign"
+version = "0.8-85"
+dependencies = ["methods", "stats", "utils"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "05c5d57b98db0c085ef01a8c099d934b"
+repository = "cran"
+
+[[packages]]
+name = "fs"
+version = "1.6.5"
+dependencies = ["methods"]
+needs-compilation = true
+md5-hash = "92e1204fc8d567e5fedc06e0ac9e8c1d"
+repository = "cran"
+
+[[packages]]
+name = "gargle"
+version = "1.5.2"
+dependencies = ["cli", "fs", "glue", "httr", "jsonlite", "lifecycle", "openssl", "rappdirs", "rlang", "stats", "utils", "withr"]
+needs-compilation = false
+md5-hash = "d18b3d01e31e0dd4f4482aed5b85dc9c"
+repository = "cran"
+
+[[packages]]
+name = "generics"
+version = "0.1.3"
+dependencies = ["methods"]
+needs-compilation = false
+md5-hash = "655261e97ea23c9193b047a27eee5d0e"
+repository = "cran"
+
+[[packages]]
+name = "ggplot2"
+version = "3.5.1"
+dependencies = ["MASS", "cli", "glue", "grDevices", "grid", "gtable", "isoband", "lifecycle", "mgcv", "rlang", "scales", "stats", "tibble", "vctrs", "withr"]
+needs-compilation = false
+md5-hash = "f2add92370293ac6078f1963427d6ab2"
+repository = "cran"
+
+[[packages]]
+name = "glue"
+version = "1.8.0"
+dependencies = ["methods"]
+needs-compilation = true
+md5-hash = "283bba07f61d89e32f9895021bf5099c"
+repository = "cran"
+
+[[packages]]
+name = "googledrive"
+version = "2.1.1"
+dependencies = ["cli", "gargle", "glue", "httr", "jsonlite", "lifecycle", "magrittr", "pillar", "purrr", "rlang", "tibble", "utils", "uuid", "vctrs", "withr"]
+needs-compilation = false
+md5-hash = "2741deb58d88bacd81489316df7cf9e2"
+repository = "cran"
+
+[[packages]]
+name = "googlesheets4"
+version = "1.1.1"
+dependencies = ["cellranger", "cli", "curl", "gargle", "glue", "googledrive", "httr", "ids", "lifecycle", "magrittr", "methods", "purrr", "rematch2", "rlang", "tibble", "utils", "vctrs", "withr"]
+needs-compilation = false
+md5-hash = "8b017d8e142ceb41bd0baaee823a6508"
+repository = "cran"
+
+[[packages]]
+name = "graphics"
+stdlib = true
+repository = "cran"
+
+[[packages]]
+name = "grDevices"
+stdlib = true
+repository = "cran"
+
+[[packages]]
+name = "grid"
+stdlib = true
+repository = "cran"
+
+[[packages]]
+name = "gtable"
+version = "0.3.6"
+dependencies = ["cli", "glue", "grid", "lifecycle", "rlang", "stats"]
+needs-compilation = false
+md5-hash = "545f07ada570ec8e3f4b22843974ac6d"
+repository = "cran"
+
+[[packages]]
+name = "haven"
+version = "2.5.4"
+dependencies = ["cli", "cpp11", "forcats", "hms", "lifecycle", "methods", "readr", "rlang", "tibble", "tidyselect", "vctrs"]
+needs-compilation = true
+md5-hash = "ef0337da48b61ae98b03413e02177822"
+repository = "cran"
+
+[[packages]]
+name = "highr"
+version = "0.11"
+dependencies = ["xfun"]
+needs-compilation = false
+md5-hash = "6d32bee4188607bcc5d3676c5cd55197"
+repository = "cran"
+
+[[packages]]
+name = "hms"
+version = "1.1.3"
+dependencies = ["lifecycle", "methods", "pkgconfig", "rlang", "vctrs"]
+needs-compilation = false
+md5-hash = "a22ab123d81a65578aabd80be82dd610"
+repository = "cran"
+
+[[packages]]
+name = "htmltools"
+version = "0.5.8.1"
+dependencies = ["base64enc", "digest", "fastmap", "grDevices", "rlang", "utils"]
+needs-compilation = true
+md5-hash = "f8035f661d3c6cc1c894dfd851ea00d1"
+repository = "cran"
+
+[[packages]]
+name = "httpuv"
+version = "1.6.15"
+dependencies = ["R6", "Rcpp", "Rcpp", "later", "later", "promises", "utils"]
+needs-compilation = true
+md5-hash = "36b144ddfa37b5d0ed7f10d07a3b0c29"
+repository = "cran"
+
+[[packages]]
+name = "httr"
+version = "1.4.7"
+dependencies = ["R6", "curl", "jsonlite", "mime", "openssl"]
+needs-compilation = false
+md5-hash = "8965ffef86aea39922f435c019daf9fb"
+repository = "cran"
+
+[[packages]]
+name = "ids"
+version = "1.0.1"
+dependencies = ["openssl", "uuid"]
+needs-compilation = false
+md5-hash = "da97e1c97b795a9c0e4f51dcb1d928bb"
+repository = "cran"
+
+[[packages]]
+name = "isoband"
+version = "0.2.7"
+dependencies = ["grid", "utils"]
+needs-compilation = true
+md5-hash = "7241f95bafb46b44aa380b9a71b10467"
+repository = "cran"
+
+[[packages]]
+name = "jquerylib"
+version = "0.1.4"
+dependencies = ["htmltools"]
+needs-compilation = false
+md5-hash = "3607a34ac45ff420bc325d84eab4b0cb"
+repository = "cran"
+
+[[packages]]
+name = "jsonlite"
+version = "1.8.9"
+dependencies = ["methods"]
+needs-compilation = true
+md5-hash = "ff89aba357dfa4574e1947066fd5cfe1"
+repository = "cran"
+
+[[packages]]
+name = "KernSmooth"
+version = "2.23-22"
+dependencies = ["stats"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "88c17e2ef6dc2315d5288b23adee5bf3"
+repository = "cran"
+
+[[packages]]
+name = "knitr"
+version = "1.49"
+dependencies = ["evaluate", "highr", "methods", "tools", "xfun", "yaml"]
+needs-compilation = false
+md5-hash = "fd195b5d3881af92282cd1b23d477923"
+repository = "cran"
+
+[[packages]]
+name = "labeling"
+version = "0.4.3"
+dependencies = ["graphics", "stats"]
+needs-compilation = false
+md5-hash = "915e6c823c1d8243641ce97253389f14"
+repository = "cran"
+
+[[packages]]
+name = "later"
+version = "1.4.1"
+dependencies = ["Rcpp", "Rcpp", "rlang"]
+needs-compilation = true
+md5-hash = "34689763fedb5bac8012cfc54de32813"
+repository = "cran"
+
+[[packages]]
+name = "lattice"
+version = "0.21-9"
+dependencies = ["grDevices", "graphics", "grid", "stats", "utils"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "fb9315e822d81ce5268c73df1de01d1e"
+repository = "cran"
+
+[[packages]]
+name = "lifecycle"
+version = "1.0.4"
+dependencies = ["cli", "glue", "rlang"]
+needs-compilation = false
+md5-hash = "4490cb8f9777f1ff4bae184d51d24405"
+repository = "cran"
+
+[[packages]]
+name = "lubridate"
+version = "1.9.4"
+dependencies = ["generics", "methods", "timechange"]
+needs-compilation = true
+md5-hash = "ea3efcbcf373e986f6dfb851f720a1a1"
+repository = "cran"
+
+[[packages]]
+name = "magrittr"
+version = "2.0.3"
+dependencies = []
+needs-compilation = true
+md5-hash = "86a110ed23536ebe26c51ff90f2a1435"
+repository = "cran"
+
+[[packages]]
+name = "MASS"
+version = "7.3-60"
+dependencies = ["grDevices", "graphics", "methods", "stats", "utils"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "24ac97ba3e4446708f9bb9b8911eb920"
+repository = "cran"
+
+[[packages]]
+name = "Matrix"
+version = "1.6-1.1"
+dependencies = ["grDevices", "graphics", "grid", "lattice", "methods", "stats", "utils"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "ef1eb06ffc3ad6c8c955d1b14dd3364f"
+repository = "cran"
+
+[[packages]]
+name = "memoise"
+version = "2.0.1"
+dependencies = ["cachem", "rlang"]
+needs-compilation = false
+md5-hash = "89da4ce771967d851db47132b762ce6f"
+repository = "cran"
+
+[[packages]]
+name = "methods"
+stdlib = true
+repository = "cran"
+
+[[packages]]
+name = "mgcv"
+version = "1.9-0"
+dependencies = ["Matrix", "graphics", "methods", "nlme", "splines", "stats", "utils"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "6a796e363be8f3c5f510c1d629d84855"
+repository = "cran"
+
+[[packages]]
+name = "mime"
+version = "0.12"
+dependencies = ["tools"]
+needs-compilation = true
+md5-hash = "7314f3b57f70474d9b4d2b831d6bb59d"
+repository = "cran"
+
+[[packages]]
+name = "modelr"
+version = "0.1.11"
+dependencies = ["broom", "magrittr", "purrr", "rlang", "tibble", "tidyr", "tidyselect", "vctrs"]
+needs-compilation = false
+md5-hash = "ddfa4fdf1446004a7b75289eb81e8548"
+repository = "cran"
+
+[[packages]]
+name = "munsell"
+version = "0.5.1"
+dependencies = ["colorspace", "methods"]
+needs-compilation = false
+md5-hash = "16b9314466b17a8b694f331faa65eff8"
+repository = "cran"
+
+[[packages]]
+name = "nlme"
+version = "3.1-163"
+dependencies = ["graphics", "lattice", "stats", "utils"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "e8e187b069ca41de938c50a64f2be375"
+repository = "cran"
+
+[[packages]]
+name = "nnet"
+version = "7.3-19"
+dependencies = ["stats", "utils"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "70c6d1ad4a564b28373ffc7b7edd28d1"
+repository = "cran"
+
+[[packages]]
+name = "openssl"
+version = "2.3.2"
+dependencies = ["askpass"]
+needs-compilation = true
+md5-hash = "e6a7f51472d3db9444b47d4936fc6338"
+repository = "cran"
+
+[[packages]]
+name = "pillar"
+version = "1.10.1"
+dependencies = ["cli", "glue", "lifecycle", "rlang", "utf8", "utils", "vctrs"]
+needs-compilation = false
+md5-hash = "5e874c0f95946919775bd6e77b79ddfb"
+repository = "cran"
+
+[[packages]]
+name = "pkgconfig"
+version = "2.0.3"
+dependencies = ["utils"]
+needs-compilation = false
+md5-hash = "7b9ca1d45d941238381cb55d13ff4d68"
+repository = "cran"
+
+[[packages]]
+name = "prettyunits"
+version = "1.2.0"
+dependencies = []
+needs-compilation = false
+md5-hash = "2e2db8105f214b80d3d4254b8aabb255"
+repository = "cran"
+
+[[packages]]
+name = "processx"
+version = "3.8.5"
+dependencies = ["R6", "ps", "utils"]
+needs-compilation = true
+md5-hash = "4feeb1991775bd4385ddffdc50226e2f"
+repository = "cran"
+
+[[packages]]
+name = "progress"
+version = "1.2.3"
+dependencies = ["R6", "crayon", "hms", "prettyunits"]
+needs-compilation = false
+md5-hash = "db78636d2dd5ee346f5caf48bfa69f5e"
+repository = "cran"
+
+[[packages]]
+name = "promises"
+version = "1.3.2"
+dependencies = ["R6", "Rcpp", "Rcpp", "fastmap", "later", "later", "magrittr", "rlang", "stats"]
+needs-compilation = true
+md5-hash = "1a2106ac7c685146c6ce5382504260c4"
+repository = "cran"
+
+[[packages]]
+name = "proxy"
+version = "0.4-27"
+dependencies = ["stats", "utils"]
+needs-compilation = true
+md5-hash = "3e202df039c271d439193557645a54ba"
+repository = "cran"
+
+[[packages]]
+name = "ps"
+version = "1.8.1"
+dependencies = ["utils"]
+needs-compilation = true
+md5-hash = "03975e103eb4516c2fa803c4aa7e6f90"
+repository = "cran"
+
+[[packages]]
+name = "purrr"
+version = "1.0.4"
+dependencies = ["cli", "cli", "lifecycle", "magrittr", "rlang", "vctrs"]
+needs-compilation = true
+md5-hash = "becb738f2c7960110c47f5b5edca93a9"
+repository = "cran"
+
+[[packages]]
+name = "R6"
+version = "2.5.1"
+dependencies = []
+needs-compilation = false
+md5-hash = "e84fd376e246738402e5529b6d52e101"
+repository = "cran"
+
+[[packages]]
+name = "ragg"
+version = "1.3.3"
+dependencies = ["systemfonts", "systemfonts", "textshaping", "textshaping"]
+needs-compilation = true
+md5-hash = "17fb3fca5d53f4927c5661685ebab80c"
+repository = "cran"
+
+[[packages]]
+name = "rappdirs"
+version = "0.3.3"
+dependencies = []
+needs-compilation = true
+md5-hash = "cafdd5478c4a6094a9f3d7335fb4f889"
+repository = "cran"
+
+[[packages]]
+name = "RColorBrewer"
+version = "1.1-3"
+dependencies = []
+needs-compilation = false
+md5-hash = "9b687595bbe02a7e43fc195ba33f065c"
+repository = "cran"
+
+[[packages]]
+name = "Rcpp"
+version = "1.0.14"
+dependencies = ["methods", "utils"]
+needs-compilation = true
+md5-hash = "586ea2169464c4f35365bd1b8243428b"
+repository = "cran"
+
+[[packages]]
+name = "readr"
+version = "2.1.5"
+dependencies = ["R6", "cli", "clipr", "cpp11", "crayon", "hms", "lifecycle", "methods", "rlang", "tibble", "tzdb", "utils", "vroom"]
+needs-compilation = true
+md5-hash = "7ddf0894538a42d06035937ee6f79711"
+repository = "cran"
+
+[[packages]]
+name = "readxl"
+version = "1.4.3"
+dependencies = ["cellranger", "cpp11", "progress", "tibble", "utils"]
+needs-compilation = true
+md5-hash = "94e24bba88d6d9505261f0cdc2035d14"
+repository = "cran"
+
+[[packages]]
+name = "rematch"
+version = "2.0.0"
+dependencies = []
+needs-compilation = false
+md5-hash = "64ad138fd1cec37d50683cbf2958e47b"
+repository = "cran"
+
+[[packages]]
+name = "rematch2"
+version = "2.1.2"
+dependencies = ["tibble"]
+needs-compilation = false
+md5-hash = "41627df5d3fbf98f0cf98c027e14af00"
+repository = "cran"
+
+[[packages]]
+name = "reprex"
+version = "2.1.1"
+dependencies = ["callr", "cli", "clipr", "fs", "glue", "knitr", "lifecycle", "rlang", "rmarkdown", "rstudioapi", "utils", "withr"]
+needs-compilation = false
+md5-hash = "cddc2f1334ad703df88a18926432470f"
+repository = "cran"
+
+[[packages]]
+name = "rlang"
+version = "1.1.5"
+dependencies = ["utils"]
+needs-compilation = true
+md5-hash = "1cd39638f16aec3de5f85af026037411"
+repository = "cran"
+
+[[packages]]
+name = "rmarkdown"
+version = "2.29"
+dependencies = ["bslib", "evaluate", "fontawesome", "htmltools", "jquerylib", "jsonlite", "knitr", "methods", "tinytex", "tools", "utils", "xfun", "yaml"]
+needs-compilation = false
+md5-hash = "8c967d7e2c8cb7c51366363340a76e15"
+repository = "cran"
+
+[[packages]]
+name = "rpart"
+version = "4.1.21"
+dependencies = ["grDevices", "graphics", "stats"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "11838fcec32af5f99a1921abd17f6905"
+repository = "cran"
+
+[[packages]]
+name = "rstudioapi"
+version = "0.17.1"
+dependencies = []
+needs-compilation = false
+md5-hash = "e127b1fe52f148584b0ebd789e50b979"
+repository = "cran"
+
+[[packages]]
+name = "rvest"
+version = "1.0.4"
+dependencies = ["cli", "glue", "httr", "lifecycle", "magrittr", "rlang", "selectr", "tibble", "xml2"]
+needs-compilation = false
+md5-hash = "bd391a4e91e6f5867761c99526ffc251"
+repository = "cran"
+
+[[packages]]
+name = "s2"
+version = "1.1.7"
+dependencies = ["Rcpp", "Rcpp", "wk", "wk"]
+needs-compilation = true
+md5-hash = "e1dcc9312a5bcab90a49053db3d280c1"
+repository = "cran"
+
+[[packages]]
+name = "sass"
+version = "0.4.9"
+dependencies = ["R6", "fs", "htmltools", "rappdirs", "rlang"]
+needs-compilation = true
+md5-hash = "7d4e8b37ce87b4307b6661b9fe62e393"
+repository = "cran"
+
+[[packages]]
+name = "scales"
+version = "1.3.0"
+dependencies = ["R6", "RColorBrewer", "cli", "farver", "glue", "labeling", "lifecycle", "munsell", "rlang", "viridisLite"]
+needs-compilation = true
+md5-hash = "eeaf1b6727eceab473f4c139e99601c8"
+repository = "cran"
+
+[[packages]]
+name = "selectr"
+version = "0.4-2"
+dependencies = ["R6", "methods", "stringr"]
+needs-compilation = false
+md5-hash = "165e7b67a11f58c53e55fee4b0da944e"
+repository = "cran"
+
+[[packages]]
+name = "sf"
+version = "1.0-19"
+dependencies = ["DBI", "Rcpp", "classInt", "grDevices", "graphics", "grid", "magrittr", "methods", "s2", "stats", "tools", "units", "utils"]
+needs-compilation = true
+md5-hash = "569dc735592f472aa0570a9f3120844a"
+repository = "cran"
+
+[[packages]]
+name = "shiny"
+version = "1.10.0"
+dependencies = ["R6", "bslib", "cachem", "commonmark", "crayon", "fastmap", "fontawesome", "glue", "grDevices", "htmltools", "httpuv", "jsonlite", "later", "lifecycle", "methods", "mime", "promises", "rlang", "sourcetools", "tools", "utils", "withr", "xtable"]
+needs-compilation = false
+md5-hash = "b8a598f6d1289a4cbd338088f119ce75"
+repository = "cran"
+
+[[packages]]
+name = "sourcetools"
+version = "0.1.7-1"
+dependencies = []
+needs-compilation = true
+md5-hash = "dd4a9af00de6e874802f6e6622b774fb"
+repository = "cran"
+
+[[packages]]
+name = "spatial"
+version = "7.3-17"
+dependencies = ["graphics", "stats", "utils"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "75ae4757dcf945ca276634c716393c1b"
+repository = "cran"
+
+[[packages]]
+name = "splines"
+stdlib = true
+repository = "cran"
+
+[[packages]]
+name = "stats"
+stdlib = true
+repository = "cran"
+
+[[packages]]
+name = "stringi"
+version = "1.8.4"
+dependencies = ["stats", "tools", "utils"]
+needs-compilation = true
+md5-hash = "e3696c0a666f2f2dc8e280f2298cba0d"
+repository = "cran"
+
+[[packages]]
+name = "stringr"
+version = "1.5.1"
+dependencies = ["cli", "glue", "lifecycle", "magrittr", "rlang", "stringi", "vctrs"]
+needs-compilation = false
+md5-hash = "75dd96fdaac6520418c92f6c434d3afc"
+repository = "cran"
+
+[[packages]]
+name = "survival"
+version = "3.5-7"
+dependencies = ["Matrix", "graphics", "methods", "splines", "stats", "utils"]
+needs-compilation = true
+recommended-for = "4.3.2"
+md5-hash = "b8adc30b595c97daf3551e331ca15e55"
+repository = "cran"
+
+[[packages]]
+name = "sys"
+version = "3.4.3"
+dependencies = []
+needs-compilation = true
+md5-hash = "ffb4244c6d4cacdd4ac8ef187699707c"
+repository = "cran"
+
+[[packages]]
+name = "systemfonts"
+version = "1.2.1"
+dependencies = ["cpp11", "grid", "jsonlite", "lifecycle", "tools", "utils"]
+needs-compilation = true
+md5-hash = "55e5fbed422030307b1fa21e07cde12c"
+repository = "cran"
+
+[[packages]]
+name = "textshaping"
+version = "1.0.0"
+dependencies = ["cpp11", "lifecycle", "stats", "stringi", "systemfonts", "systemfonts", "utils"]
+needs-compilation = true
+md5-hash = "4723981f9cb381f266f2ea31c7ead77b"
+repository = "cran"
+
+[[packages]]
+name = "tibble"
+version = "3.2.1"
+dependencies = ["fansi", "lifecycle", "magrittr", "methods", "pillar", "pkgconfig", "rlang", "utils", "vctrs"]
+needs-compilation = true
+md5-hash = "e4ccfbe28c84b11f86388379c8b43925"
+repository = "cran"
+
+[[packages]]
+name = "tidyr"
+version = "1.3.1"
+dependencies = ["cli", "cpp11", "dplyr", "glue", "lifecycle", "magrittr", "purrr", "rlang", "stringr", "tibble", "tidyselect", "utils", "vctrs"]
+needs-compilation = true
+md5-hash = "0491d9d3359af7baf8ad9003ce44aa1d"
+repository = "cran"
+
+[[packages]]
+name = "tidyselect"
+version = "1.2.1"
+dependencies = ["cli", "glue", "lifecycle", "rlang", "vctrs", "withr"]
+needs-compilation = true
+md5-hash = "49c581292e819a2a39aac321f27ab0a8"
+repository = "cran"
+
+[[packages]]
+name = "tidyverse"
+version = "2.0.0"
+dependencies = ["broom", "cli", "conflicted", "dbplyr", "dplyr", "dtplyr", "forcats", "ggplot2", "googledrive", "googlesheets4", "haven", "hms", "httr", "jsonlite", "lubridate", "magrittr", "modelr", "pillar", "purrr", "ragg", "readr", "readxl", "reprex", "rlang", "rstudioapi", "rvest", "stringr", "tibble", "tidyr", "xml2"]
+needs-compilation = false
+md5-hash = "f5705d42feb6697e214d8b007fda2f55"
+repository = "cran"
+
+[[packages]]
+name = "timechange"
+version = "0.3.0"
+dependencies = ["cpp11"]
+needs-compilation = true
+md5-hash = "f62746e78800a3edb8bfdc2ceffe0722"
+repository = "cran"
+
+[[packages]]
+name = "tinytex"
+version = "0.54"
+dependencies = ["xfun"]
+needs-compilation = false
+md5-hash = "ad658cf60236ff35d3d84824862f45ea"
+repository = "cran"
+
+[[packages]]
+name = "tools"
+stdlib = true
+repository = "cran"
+
+[[packages]]
+name = "tzdb"
+version = "0.4.0"
+dependencies = ["cpp11"]
+needs-compilation = true
+md5-hash = "c92e89379dd5c49a03b5b3996abcd0f1"
+repository = "cran"
+
+[[packages]]
+name = "units"
+version = "0.8-5"
+dependencies = ["Rcpp", "Rcpp"]
+needs-compilation = true
+md5-hash = "a6d32757cf3662c53fc43ba0eb7bef59"
+repository = "cran"
+
+[[packages]]
+name = "utf8"
+version = "1.2.4"
+dependencies = []
+needs-compilation = true
+md5-hash = "b12b4a8b7c9fc8429a0c0633c59c7c18"
+repository = "cran"
+
+[[packages]]
+name = "utils"
+stdlib = true
+repository = "cran"
+
+[[packages]]
+name = "uuid"
+version = "1.2-1"
+dependencies = []
+needs-compilation = true
+md5-hash = "33baac9b2bfbc4406d4d806875a91747"
+repository = "cran"
+
+[[packages]]
+name = "vctrs"
+version = "0.6.5"
+dependencies = ["cli", "glue", "lifecycle", "rlang"]
+needs-compilation = true
+md5-hash = "191f3037d9b6f3f8640661f61e2aeb93"
+repository = "cran"
+
+[[packages]]
+name = "viridisLite"
+version = "0.4.2"
+dependencies = []
+needs-compilation = false
+md5-hash = "059e754e58fd6735dd50a1799f95c8c1"
+repository = "cran"
+
+[[packages]]
+name = "vroom"
+version = "1.6.5"
+dependencies = ["bit64", "cli", "cpp11", "crayon", "glue", "hms", "lifecycle", "methods", "progress", "rlang", "stats", "tibble", "tidyselect", "tzdb", "tzdb", "vctrs", "withr"]
+needs-compilation = true
+md5-hash = "8e6351782f34b6ae20bdc66836b52052"
+repository = "cran"
+
+[[packages]]
+name = "withr"
+version = "3.0.2"
+dependencies = ["grDevices", "graphics"]
+needs-compilation = false
+md5-hash = "f2e3780a71f6258d6f9055f138d474f2"
+repository = "cran"
+
+[[packages]]
+name = "wk"
+version = "0.9.4"
+dependencies = []
+needs-compilation = true
+md5-hash = "933c94239cf90e341d562dab8a2b0c4c"
+repository = "cran"
+
+[[packages]]
+name = "xfun"
+version = "0.50"
+dependencies = ["grDevices", "stats", "tools"]
+needs-compilation = true
+md5-hash = "104f5b01655aa168df99888d8d4bbd22"
+repository = "cran"
+
+[[packages]]
+name = "xml2"
+version = "1.3.6"
+dependencies = ["cli", "methods", "rlang"]
+needs-compilation = true
+md5-hash = "fc6679028dca1f3047c8c745fb724524"
+repository = "cran"
+
+[[packages]]
+name = "xtable"
+version = "1.8-4"
+dependencies = ["stats", "utils"]
+needs-compilation = false
+md5-hash = "0a7da6c3b34b2974110a7d00fe9afa79"
+repository = "cran"
+
+[[packages]]
+name = "yaml"
+version = "2.3.10"
+dependencies = []
+needs-compilation = true
+md5-hash = "f5fad2fbfe3dd8ccb29125fa6361150d"
+repository = "cran"

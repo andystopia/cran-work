@@ -1,0 +1,42 @@
+[package]
+RVersion = "4.3.2"
+
+[dependencies]
+shiny = "1.10.0"
+tidyverse = "2.0.0"
+sf = "1.0-19"
+
+[compile.env.sf.vars]
+CPPFLAGS = "-Wl,-rpath,$CONDA_DIR/lib/"
+
+
+[conda-requirements]
+# these really should just be part
+# of the standard build environment,
+# so we really don't need these, as they
+# can be inferred. 
+compilers = "*"
+sed = "*"
+zlib = "*"
+pkg-config = "*"
+make = "*"
+openblas = "*"
+
+# these are uesful for a variety
+# of packages, my struggle is that
+# I'm not sure how much I'll actually
+# care about build system isolation.
+udunits2 = "*"
+freetype = "*"
+harfbuzz = "*"
+fribidi = "*"
+glib = "*"
+liblzma-devel = "*"
+libpng = "*"
+libtiff = "*"
+libjpeg-turbo = "*"
+
+# and these of course, are the sf dependencies
+geos = ">=2.0.1"
+libgdal = ">=3.4.0"
+proj = ">=4.8.0"
