@@ -62,7 +62,7 @@ impl<T: Hash + Eq + Clone> Tree<T> {
         output_hashmap
     }
 
-    pub fn create_leveled(&self) -> Vec<HashSet<T>> { 
+    pub fn create_leveled(&self) -> Vec<HashSet<T>> {
         let depths = self.create_distance_map();
 
         let max_depth = *depths.values().max().unwrap();

@@ -4,7 +4,7 @@ use ecow::EcoString;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RVersionEco {
     pub components: Vec<EcoString>,
-    pub separators: Vec<VersionSeperator>
+    pub separators: Vec<VersionSeperator>,
 }
 
 impl PartialOrd for RVersionEco {
@@ -35,8 +35,6 @@ impl Ord for RVersionEco {
                 (None, Some(_)) => return std::cmp::Ordering::Less,
                 (Some(_), None) => return std::cmp::Ordering::Greater,
                 (Some(self_comp), Some(other_comp)) => {
-
-                 
                     if self_comp.len() == other_comp.len() {
                         match self_comp.cmp(other_comp) {
                             std::cmp::Ordering::Equal => continue,
@@ -55,12 +53,20 @@ impl Ord for RVersionEco {
 
 impl RVersionEco {
     pub fn from_str(s: &str) -> Self {
-        let components = s.split(&['.', '-']).map(EcoString::from).collect::<Vec<_>>();
-        Self { components, separators: s.chars().filter_map(|c| match c {
-            '.' => Some(VersionSeperator::Dot),
-            '-' => Some(VersionSeperator::Dash),
-            _ => None
-        }).collect() 
+        let components = s
+            .split(&['.', '-'])
+            .map(EcoString::from)
+            .collect::<Vec<_>>();
+        Self {
+            components,
+            separators: s
+                .chars()
+                .filter_map(|c| match c {
+                    '.' => Some(VersionSeperator::Dot),
+                    '-' => Some(VersionSeperator::Dash),
+                    _ => None,
+                })
+                .collect(),
         }
     }
 }
@@ -68,12 +74,17 @@ impl RVersionEco {
 impl std::fmt::Display for RVersionEco {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("v")?;
-        for (component, sep) in self.components.iter().zip(self.separators.iter().map(Some).chain(std::iter::once(None))) {
+        for (component, sep) in self.components.iter().zip(
+            self.separators
+                .iter()
+                .map(Some)
+                .chain(std::iter::once(None)),
+        ) {
             f.write_str(component.as_str())?;
-            if let Some(sep) = sep { 
+            if let Some(sep) = sep {
                 match sep {
                     VersionSeperator::Dot => f.write_str(".")?,
-                    VersionSeperator::Dash => f.write_str("-")?
+                    VersionSeperator::Dash => f.write_str("-")?,
                 }
             }
         }
@@ -85,18 +96,21 @@ impl pubgrub::version::Version for RVersionEco {
     fn lowest() -> Self {
         RVersionEco {
             components: Vec::new(),
-            separators: Vec::new()
+            separators: Vec::new(),
         }
     }
 
     fn bump(&self) -> Self {
         let mut comp = self.components.clone();
         comp.push(EcoString::from("0"));
-        Self { components: comp, separators: {
-            let mut seps = self.separators.clone();
-            seps.push(VersionSeperator::Dot);
-            seps
-        } }
+        Self {
+            components: comp,
+            separators: {
+                let mut seps = self.separators.clone();
+                seps.push(VersionSeperator::Dot);
+                seps
+            },
+        }
     }
 }
 
@@ -104,7 +118,7 @@ impl<'s> From<RVersion<'s>> for RVersionEco {
     fn from(value: RVersion<'s>) -> Self {
         Self {
             components: value.components.into_iter().map(|s| s.into()).collect(),
-            separators: value.separators
+            separators: value.separators,
         }
     }
 }
