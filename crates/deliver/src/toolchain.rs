@@ -273,8 +273,8 @@ async fn install_version_of_r(r_version: &str, pc: &PathContainer) -> miette::Re
     let exit_status = running.wait().await.into_diagnostic()?;
 
     if exit_status.success() {
-        let mut toolchains = ToolchainsFile::load(pc)?;
-        toolchains.toolchain.push(ToolchainPaths {
+        let mut toolchains = ToolchainsConfig::load(pc)?;
+        toolchains.toolchain.push(ToolchainPath {
             path: destination_path
                 .to_str()
                 .expect("only utf8 install paths supported currently")
@@ -289,14 +289,36 @@ async fn install_version_of_r(r_version: &str, pc: &PathContainer) -> miette::Re
 
 pub async fn invoke_r() -> miette::Result<()> {
     let pc = construct_path_container()?;
-    let args = std::env::args_os().skip(1).collect::<Vec<_>>();
 
-    let toolchains = ToolchainsFile::load(&pc)?;
-    let Some(latest_toolchain) = toolchains.toolchain.first() else {
-        bail!("there doesn't appear to be an R version available. You can install the latest version by running `deliver toolchain add latest`");
+    let toolchains = ToolchainsConfig::load(&pc)?;
+
+    let possible_version_select = std::env::args()
+        .skip(1)
+        .next()
+        .filter(|x| x.starts_with("+"));
+
+    let mut arg_skip = 1;
+    let toolchain = if let Some(version) = possible_version_select {
+        let mut version = version;
+        version.remove(0);
+
+        let Some(toolchain) = toolchains.select_version(&version) else {
+            // add check against server to see if such an R version *could* exist
+            bail!("R version {version}, not found. You could try installing it with `deliver toolchain add {version}`, if it's a valid R version");
+        };
+
+        arg_skip = 2;
+        toolchain
+    } else {
+        let Some(latest_toolchain) = toolchains.toolchain.first() else {
+            bail!("there doesn't appear to be an R version available. You can install the latest version by running `deliver toolchain add latest`");
+        };
+        latest_toolchain
     };
 
-    let command = std::path::PathBuf::from(&latest_toolchain.path).join("bin/R");
+    let args = std::env::args_os().skip(arg_skip).collect::<Vec<_>>();
+
+    let command = std::path::PathBuf::from(&toolchain.path).join("bin/R");
 
     let mut command = tokio::process::Command::new(command);
 
@@ -328,13 +350,13 @@ pub async fn invoke_r() -> miette::Result<()> {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct ToolchainPaths {
+pub struct ToolchainPath {
     path: String,
     version: String,
 }
 
-impl ToolchainPaths {
-    pub fn cmp_versions(&self, other: &ToolchainPaths) -> std::cmp::Ordering {
+impl ToolchainPath {
+    pub fn cmp_versions(&self, other: &ToolchainPath) -> std::cmp::Ordering {
         let self_sections = self
             .version
             .split('.')
@@ -355,15 +377,15 @@ impl ToolchainPaths {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
-pub struct ToolchainsFile {
-    toolchain: Vec<ToolchainPaths>,
+pub struct ToolchainsConfig {
+    toolchain: Vec<ToolchainPath>,
 }
 
-impl ToolchainsFile {
+impl ToolchainsConfig {
     fn toolchains_file_path(pc: &PathContainer) -> std::path::PathBuf {
         pc.toolchain_dir.join("toolchains.toml")
     }
-    fn load(pc: &PathContainer) -> Result<ToolchainsFile, miette::Error> {
+    fn load(pc: &PathContainer) -> Result<ToolchainsConfig, miette::Error> {
         let toml_path = Self::toolchains_file_path(pc);
 
         if !toml_path.exists() {
@@ -371,7 +393,7 @@ impl ToolchainsFile {
         }
 
         let toml_contents = fs_err::read_to_string(toml_path).into_diagnostic()?;
-        let mut toolchains: ToolchainsFile =
+        let mut toolchains: ToolchainsConfig =
             toml_edit::de::from_str(&toml_contents).into_diagnostic()?;
 
         toolchains
@@ -379,6 +401,11 @@ impl ToolchainsFile {
             .sort_by(|a, b| a.cmp_versions(b).reverse());
 
         Ok(toolchains)
+    }
+
+    fn select_version(&self, version: &str) -> Option<&ToolchainPath> {
+        // TODO: make O(1)
+        self.toolchain.iter().find(|t| t.version == version)
     }
 
     fn save(&self, pc: &PathContainer) -> Result<(), miette::Error> {
@@ -391,7 +418,7 @@ impl ToolchainsFile {
 }
 
 fn list_toolchains(pc: &PathContainer) -> miette::Result<()> {
-    let toolchains = ToolchainsFile::load(pc)?;
+    let toolchains = ToolchainsConfig::load(pc)?;
 
     if toolchains.toolchain.is_empty() {
         println!("no installed toolchains.\n");
