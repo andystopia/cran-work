@@ -1622,12 +1622,12 @@ mod test {
 
     #[test]
     fn real_test() -> miette::Result<()> {
-        let input = r#"print(c(
+        let input = r#"c(
     person("Mine", "Dogucu", , "mdogucu@gmail.com", c("aut", "cre"), comment = c(ORCID = "0000-0002-8007-934X")),
     person("Alicia", "Johnson", , role = "aut"),
     # comment here
     person("Miles", "Ott", , role = "aut", comment = c(ORCID = "0000-0003-4457-6565"))
-    ))"#;
+    )"#;
         let res = pretty_parse(parse_r_syntax_tree(), input, "real test")?;
 
         let interpreted = interpret_r(&res)?;
