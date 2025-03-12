@@ -1,5 +1,6 @@
 pub mod cran;
 mod cran_index;
+mod edit_project;
 mod leveling_graph;
 mod makefile;
 mod parbuild;
@@ -615,10 +616,13 @@ fn print_dependency_tree(
 #[derive(Debug, Parser)]
 pub enum Command {
     Init {
-        package_name: String,
+        #[clap(long)]
+        /// create an RStudio project
+        rstudio: bool,
     },
     New {
         package_name: String,
+        rstudio: bool,
     },
     Add {
         dependency: String,
@@ -1159,8 +1163,24 @@ async fn deliver() -> miette::Result<()> {
             print_build_order(&workspace).await?;
             Ok(())
         }
-        Command::Init { package_name: _ } => todo!(),
-        Command::New { package_name: _ } => todo!(),
+        Command::Init { rstudio } => {
+            let cwd = std::env::current_dir().into_diagnostic()?;
+
+            let project_name = cwd
+                .components()
+                .last()
+                .expect("paths should have a last component")
+                .as_os_str()
+                .to_str()
+                .expect("directory name must be UTF-8 to create a project");
+
+            edit_project::init(project_name, rstudio)?;
+            Ok(())
+        }
+        Command::New {
+            package_name: _,
+            rstudio: bool,
+        } => todo!(),
         Command::PrintBuildScript { workspace } => {
             let workspace = workspace.unwrap_or("tests/first-example/".to_owned().into());
 
